@@ -395,7 +395,8 @@ $('exp').onclick=()=>{
 // ===== プロジェクト保存：動画データはコピーせず「ファイルへのつながり」と設定だけを保存 =====
 let vHandle=null,aHandle=null,pend=null;
 const VEXT=['.mp4','.mov','.m4v','.webm','.mkv','.3gp'],AEXT=['.mp3','.m4a','.aac','.wav','.ogg','.flac','.opus'];
-const canPick=!!window.showOpenFilePicker;
+// AndroidではshowOpenFilePickerが「ファイル」型の選択画面になり、セキュリティフォルダではギャラリーが出ないため使わない
+const canPick=false;
 async function pick(kind){
   if(!canPick){$(kind==='v'?'file':'bfile').click();return}
   try{const acc=kind==='v'?{'video/*':VEXT}:{'audio/*':AEXT,'video/*':VEXT};
@@ -451,7 +452,7 @@ async function openP(p){
 }
 $('popen').onclick=()=>{$('sheet').hidden=true;$('psheet').hidden=false;pend=null;
   if(!$('pname').value)$('pname').value=vFile?vFile.name.replace(/\.[^.]+$/,''):'';
-  $('psave').textContent=curPid?'上書き保存':'保存';info('動画ファイルはコピーせず、どのファイルか・A/B点・速度などの設定だけを保存します。');pRender()};
+  $('psave').textContent=curPid?'上書き保存':'保存';info('動画ファイルはコピーせず、どのファイルか・A/B点・速度などの設定だけを保存します。開くときは同じ動画を選ぶと設定が戻ります。');pRender()};
 $('pclose').onclick=()=>{pend=null;$('psheet').hidden=true};
 $('psave').onclick=async()=>{
   if(!vFile){info('先に動画を選んでください。');return}
