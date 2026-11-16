@@ -173,7 +173,7 @@ input[type=file]{display:none}
     <option value="540">画質 軽</option><option value="720" selected>画質 標準</option><option value="1080">画質 高</option>
   </select>
   <select id="rep" aria-label="往復回数">
-    <option value="audio">音の長さ</option><option value="1">往復1回</option><option value="2">往復2回</option><option value="3" selected>往復3回</option>
+    <option value="audio">音声合わせ</option><option value="1">往復1回</option><option value="2">往復2回</option><option value="3" selected>往復3回</option>
     <option value="5">往復5回</option><option value="10">往復10回</option><option value="20">往復20回</option>
   </select>
   <button id="exp" class="exp" disabled>書き出し</button>
@@ -398,7 +398,7 @@ function beginRec(){
   note.textContent='録画しています。終わるまでこの画面のままにしてください（'+(recOnce?'音の長さ＋Aに戻るまで':'往復'+$('rep').value+'回')+'）。';ui();
 }
 $('exp').onclick=()=>{
-  if($('rep').value==='audio'&&!bUrl){note.textContent='「音の長さ」で書き出すには、先に「裏の音」を選んでください。';return}
+  if($('rep').value==='audio'&&!bUrl){note.textContent='「音声合わせ」で書き出すには、先に「裏の音」を選んでください。';return}
   $('dl').classList.remove('ready');$('dl').textContent='保存';
   if(looping&&phase==='play'){beginRec();return}
   expPending=true;startLoop();
