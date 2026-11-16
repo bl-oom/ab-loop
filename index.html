@@ -70,6 +70,8 @@ input[type=file]{display:none}
 .rg2{background:#f5b83d}
 #bmA,#bmB{background:#f5b83d}#bmA span,#bmB span{background:#f5b83d}
 .okb{background:var(--go);color:#111;border:0}
+.resume{position:absolute;left:12px;right:12px;bottom:12px;z-index:3;width:auto;height:52px;background:#9b8cff;color:#14102e;border:0;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 12px;display:block}
+.resume[hidden]{display:none}
 .pbtn{border-color:#9b8cff;color:#c9c0ff}
 .mini{width:auto;height:36px;padding:0 14px}
 .prow{display:grid;grid-template-columns:minmax(0,1fr) 90px;gap:6px}
@@ -132,6 +134,7 @@ input[type=file]{display:none}
       <button class="setA" id="bsetA">ここを音A</button><button class="setB" id="bsetB">ここを音B</button><button id="breset">リセット</button><button id="bclr">音を外す</button>
     </div>
   </div>
+  <button class="resume" id="resume" hidden></button>
   <label class="empty" id="empty" for="file"><div><b>動画を選ぶ</b>端末に保存されている動画をタップして開く</div></label>
 </div>
 <div class="side">
@@ -437,9 +440,9 @@ async function fromHandle(h){
   try{let st=await h.queryPermission({mode:'read'});if(st!=='granted')st=await h.requestPermission({mode:'read'});if(st!=='granted')return null;return await h.getFile()}catch(e){return null}
 }
 function applySettings(p){curPid=p.id;$('pname').value=p.name;['spd','q','rep','bvol'].forEach(k=>{if(p[k]!=null)$(k).value=p[k]});$('bvol').onchange()}
-function pendVideo(f){const p=pend.p;const same=f.name===p.vName&&(!p.vSize||f.size===p.vSize);
+function pendVideo(f){const p=pend.p;$('resume').hidden=true;const same=f.name===p.vName&&(!p.vSize||f.size===p.vSize);
   loadVideo(f,p.A,p.B);note.textContent=same?'プロジェクト「'+p.name+'」を開きました。':'選んだ動画が保存時と違うかもしれません（A・B点はそのまま使います）。';
-  if(p.aName){pend.step='a';showStep()}else{pend=null;$('psheet').hidden=true}}
+  if(p.aName){pend.step='a';$('sheet').hidden=true;$('psheet').hidden=false;showStep()}else{pend=null;$('psheet').hidden=true}}
 function pendAudio(f){const p=pend.p;loadAudio(f,p.bA,p.bB);pend=null;$('psheet').hidden=true}
 async function openP(p){
   applySettings(p);pend=null;$('bclr').onclick();
@@ -470,6 +473,21 @@ $('plist').onclick=async e=>{
   if(d){if(d.dataset.sure){await pDel(+d.dataset.del);if(curPid===+d.dataset.del)curPid=null;pRender()}
     else{d.dataset.sure=1;d.textContent='本当に';setTimeout(()=>{if(d.isConnected){delete d.dataset.sure;d.textContent='削除'}},3000)}}
 };
+// ===== 作業中の自動保存（ブラウザを閉じても続きから）=====
+const LKEY='abloop_last';let lastSaved='';
+function saveLast(){
+  if(!vFile)return;
+  const o={name:$('pname').value||vFile.name.replace(/\.[^.]+$/,''),id:curPid,vName:vFile.name,vSize:vFile.size,aName:aFile?aFile.name:null,
+    A,B,bA,bB,spd:$('spd').value,q:$('q').value,rep:$('rep').value,bvol:$('bvol').value};
+  const j=JSON.stringify(o);if(j===lastSaved)return;lastSaved=j;
+  try{localStorage.setItem(LKEY,JSON.stringify({...o,date:Date.now()}))}catch(e){}
+}
+setInterval(saveLast,1500);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)saveLast()});
+window.addEventListener('pagehide',saveLast);
+{let last=null;try{last=JSON.parse(localStorage.getItem(LKEY)||'null')}catch(e){}
+ if(last&&last.vName){const b=$('resume');b.hidden=false;b.textContent='前回の続きから（'+last.vName+'）';
+  b.onclick=()=>{applySettings(last);curPid=last.id||null;pend={p:last,step:'v'};note.textContent='前回の動画「'+last.vName+'」を選んでください。';$('file').click()}}}
 document.addEventListener('visibilitychange',()=>{last=performance.now()});
 ui();
 }
