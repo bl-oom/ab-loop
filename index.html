@@ -265,7 +265,7 @@ function ui(){
 let vFile=null,pendA=null,pendB=null,curPid=null;
 function loadVideo(f,a,b){
   stopLoop();if(url)URL.revokeObjectURL(url);vFile=f;
-  url=URL.createObjectURL(f);v.src=url;A=B=null;pendA=a??null;pendB=b??null;$('empty').style.display='none';
+  url=URL.createObjectURL(f);v.src=url;A=B=null;pendA=a??null;pendB=b??null;$('empty').style.display='none';$('resume').hidden=true;
   note.textContent=f.name;
 }
 $('file').onchange=e=>{const f=e.target.files[0];if(!f)return;e.target.value='';vHandle=null;if(pend&&pend.step==='v'){pendVideo(f);return}curPid=null;loadVideo(f)};
