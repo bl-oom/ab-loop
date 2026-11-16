@@ -13,62 +13,84 @@
 /*
 VOICE: 編集室の道具。静かで確実、操作に迷わない。
 IDEA: 編集ソフトのタイムライン（IN/OUT点とループ範囲）。
-PICTURE: 画面上部いっぱいの映像プレビュー、その下にA-B範囲が光るタイムライン。
-COLOUR/TYPE: 黒に近いモニター面、A=シアン、B=マゼンタ、往復中=アンバー無し→白。Zen Kaku Gothic + 等幅数字。
-LAYOUT: 縦一列。ボタンは固定グリッドで、状態が変わっても位置は一切動かさない。
+PICTURE: 残りの高さいっぱいの映像プレビュー、その下にA-B範囲が光るタイムライン。
+COLOUR/TYPE: 黒に近いモニター面、A=シアン、B=マゼンタ。Zen Kaku Gothic + 等幅数字。
+LAYOUT: 常に1画面に収める。縦長画面は上プレビュー・下操作、幅広画面(Fold内画面)は左プレビュー・右操作。ボタン位置は固定。
 */
 :root{color-scheme:dark;--bg:#0e0f12;--panel:#17191e;--line:#2a2d35;--ink:#eef0f4;--mute:#8b909c;--a:#22c7e0;--b:#ef3f8f;--go:#f2f2f2}
 *{box-sizing:border-box;min-width:0;-webkit-tap-highlight-color:transparent}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Zen Kaku Gothic New",system-ui,sans-serif;overflow-x:clip}
-.wrap{max-width:720px;margin:0 auto;padding:12px 14px 28px}
-h1{font-size:20px;margin:4px 2px 10px;font-weight:700;letter-spacing:.02em}
-.stage{position:relative;background:#000;border-radius:14px;overflow:hidden;aspect-ratio:16/9;display:grid;place-items:center;border:1px solid var(--line)}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 "Zen Kaku Gothic New",system-ui,sans-serif;overflow:hidden}
+.wrap{height:100dvh;display:flex;flex-direction:column;gap:8px;padding:max(8px,env(safe-area-inset-top)) 10px max(8px,env(safe-area-inset-bottom));max-width:760px;margin:0 auto}
+.side{display:contents}
+h1{order:-1;font-size:16px;margin:0 2px;font-weight:700;flex:none}
+.stage{order:0;position:relative;flex:1 1 auto;min-height:120px;background:#000;border-radius:12px;overflow:hidden;border:1px solid var(--line)}
 .stage video,.stage canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
 .stage canvas{display:none}
 .stage.looping canvas{display:block}.stage.looping video{visibility:hidden}
 .empty{position:absolute;inset:0;display:grid;place-items:center;text-align:center;color:var(--mute);padding:20px;cursor:pointer}
 .empty b{display:block;color:var(--ink);font-size:18px;margin-bottom:4px}
-.badge{position:absolute;left:10px;top:10px;font:600 13px "Overpass Mono",monospace;background:rgba(0,0,0,.6);padding:3px 9px;border-radius:99px;display:none}
+.badge{position:absolute;left:8px;top:8px;font:600 12px "Overpass Mono",monospace;background:rgba(0,0,0,.65);padding:3px 9px;border-radius:99px;display:none}
 .stage.looping .badge{display:block}
-.tl{position:relative;height:56px;margin:14px 0 4px;touch-action:none;cursor:pointer}
-.track{position:absolute;left:0;right:0;top:22px;height:12px;border-radius:6px;background:var(--panel);border:1px solid var(--line)}
-.range{position:absolute;top:22px;height:12px;background:linear-gradient(90deg,var(--a),var(--b));opacity:.55;border-radius:6px;display:none}
-.mk{position:absolute;top:6px;width:2px;height:44px;margin-left:-1px;display:none}
-.mk span{position:absolute;top:-4px;left:50%;transform:translateX(-50%);font:700 12px "Overpass Mono",monospace;color:#000;border-radius:4px;padding:0 4px}
+.side>*{order:1;flex:none}
+.tl{position:relative;height:40px;touch-action:none;cursor:pointer}
+.track{position:absolute;left:0;right:0;top:16px;height:12px;border-radius:6px;background:var(--panel);border:1px solid var(--line)}
+.range{position:absolute;top:16px;height:12px;background:linear-gradient(90deg,var(--a),var(--b));opacity:.55;border-radius:6px;display:none}
+.mk{position:absolute;top:12px;width:2px;height:24px;margin-left:-1px;display:none}
+.mk span{position:absolute;top:-13px;left:50%;transform:translateX(-50%);font:700 11px "Overpass Mono",monospace;color:#000;border-radius:4px;padding:0 4px}
 #mA{background:var(--a)}#mA span{background:var(--a)}#mB{background:var(--b)}#mB span{background:var(--b)}
-.head{position:absolute;top:14px;width:4px;height:28px;margin-left:-2px;background:var(--go);border-radius:2px;box-shadow:0 0 0 2px #0008}
-.times{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;font:600 14px "Overpass Mono",monospace;margin-bottom:12px}
-.times div{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:6px 10px;white-space:nowrap}
-.times small{display:block;font:500 12px "Zen Kaku Gothic New",sans-serif;color:var(--mute)}
+.head{position:absolute;top:10px;width:4px;height:24px;margin-left:-2px;background:var(--go);border-radius:2px;box-shadow:0 0 0 2px #0008}
+.times{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;font:600 14px "Overpass Mono",monospace}
+.times div{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:4px 8px;white-space:nowrap;display:flex;gap:6px;align-items:baseline;height:34px}
+.times small{font:500 12px "Zen Kaku Gothic New",sans-serif;color:var(--mute)}
 #tA{color:var(--a)}#tB{color:var(--b)}
-.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
-button,select,label.btn{font:700 15px "Zen Kaku Gothic New",sans-serif;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:12px;min-height:52px;padding:6px 4px;cursor:pointer;display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.2}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+button,select,.dl{font:700 14px "Zen Kaku Gothic New",sans-serif;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:12px;height:46px;padding:4px 2px;cursor:pointer;display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.15;width:100%}
+label.btn{font:700 14px "Zen Kaku Gothic New",sans-serif;background:var(--panel);border:1px solid var(--line);border-radius:12px;height:46px;display:flex;align-items:center;justify-content:center;text-align:center;cursor:pointer}
 button:active{transform:scale(.97)}
 button:focus-visible,select:focus-visible{outline:2px solid var(--a);outline-offset:2px}
 button:disabled{opacity:.35;cursor:default}
+select{appearance:none;text-align-last:center;font-size:14px}
 .setA{border-color:var(--a);color:var(--a)}.setB{border-color:var(--b);color:var(--b)}
-.go{grid-column:span 4;min-height:64px;font-size:19px;background:var(--go);color:#111;border:0}
+.go{grid-column:span 4;height:52px;font-size:18px;background:var(--go);color:#111;border:0}
 .go.on{background:#2b2e36;color:var(--go);border:2px solid var(--go)}
 .wide2{grid-column:span 2}
-select{appearance:none;font-size:16px}
 .exp{border-color:var(--go)}
 .exp.rec{background:#c62828;border-color:#c62828;color:#fff}
-.dl{display:flex;align-items:center;justify-content:center;margin-top:8px;min-height:52px;border-radius:12px;background:var(--a);color:#001418;font-weight:700;text-decoration:none}
-.dl[hidden]{display:none}
+.bar{display:grid;grid-template-columns:minmax(0,1fr) 150px;gap:6px;align-items:center}
+.note{color:var(--mute);font-size:12px;margin:0 2px;height:34px;overflow:hidden;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.dl{text-decoration:none;opacity:.35;pointer-events:none}
+.dl.ready{opacity:1;pointer-events:auto;background:var(--a);color:#001418;border-color:var(--a)}
 input[type=file]{display:none}
-.note{color:var(--mute);font-size:13px;margin:12px 2px 0;min-height:20px}
+/* 幅広画面（Fold内画面・横向き）：左プレビュー、右操作 */
+@media (min-width:700px) and (min-aspect-ratio:4/5){
+  .wrap{max-width:none;display:grid;grid-template-columns:minmax(0,1fr) 380px;grid-template-rows:minmax(0,1fr);gap:12px;padding:12px}
+  .stage{height:100%}
+  .side{display:flex;flex-direction:column;gap:10px;overflow:auto}
+  h1{font-size:20px}
+  button,select,.dl,label.btn{height:54px;font-size:15px}
+  .go{height:60px}
+}
+/* 横向きスマホなど高さが低いとき */
+@media (max-height:520px) and (min-aspect-ratio:1/1){
+  .wrap{display:grid;grid-template-columns:minmax(0,1fr) 340px;grid-template-rows:minmax(0,1fr);gap:8px;max-width:none}
+  .stage{height:100%}
+  .side{display:flex;flex-direction:column;gap:6px;overflow:auto}
+  h1{display:none}
+}
+@media (max-height:700px) and (max-aspect-ratio:1/1){h1{display:none}}
 </style>
 </head>
 <body>
 <div class="wrap">
-<h1>AB往復ループ</h1>
 <div class="stage" id="stage">
   <video id="v" playsinline preload="auto"></video>
   <canvas id="cv"></canvas>
   <div class="badge" id="badge">▶ A→B</div>
   <label class="empty" id="empty" for="file"><div><b>動画を選ぶ</b>端末に保存されている動画をタップして開く</div></label>
 </div>
-
+<div class="side">
+<h1>AB往復ループ</h1>
 <div class="tl" id="tl">
   <div class="track"></div>
   <div class="range" id="range"></div>
@@ -76,36 +98,37 @@ input[type=file]{display:none}
   <div class="mk" id="mB"><span>B</span></div>
   <div class="head" id="head" style="left:0"></div>
 </div>
-
 <div class="times">
-  <div><small>現在</small><span id="tN">0:00.00</span></div>
-  <div><small>A点</small><span id="tA">--</span></div>
-  <div><small>B点</small><span id="tB">--</span></div>
+  <div><small>今</small><span id="tN">0:00.00</span></div>
+  <div><small>A</small><span id="tA">--</span></div>
+  <div><small>B</small><span id="tB">--</span></div>
 </div>
-
 <div class="grid">
   <button id="back">◀ 1コマ</button>
   <button id="play">再生</button>
   <button id="fwd">1コマ ▶</button>
-  <label class="btn" for="file">動画を変更</label>
+  <label class="btn" for="file">動画変更</label>
   <button class="setA wide2" id="setA">ここをA点に</button>
   <button class="setB wide2" id="setB">ここをB点に</button>
   <button class="go" id="go" disabled>往復ループ開始</button>
-  <select id="spd" class="wide2" aria-label="速度">
-    <option value="0.25">速度 0.25倍</option><option value="0.5">速度 0.5倍</option>
-    <option value="1" selected>速度 1倍</option><option value="1.5">速度 1.5倍</option><option value="2">速度 2倍</option>
+  <select id="spd" aria-label="速度">
+    <option value="0.25">速度0.25</option><option value="0.5">速度0.5</option>
+    <option value="1" selected>速度1倍</option><option value="1.5">速度1.5</option><option value="2">速度2倍</option>
   </select>
-  <select id="q" class="wide2" aria-label="画質">
-    <option value="540">画質 軽め</option><option value="720" selected>画質 標準</option><option value="1080">画質 高め</option>
+  <select id="q" aria-label="画質">
+    <option value="540">画質 軽</option><option value="720" selected>画質 標準</option><option value="1080">画質 高</option>
   </select>
-  <select id="rep" class="wide2" aria-label="往復回数">
-    <option value="1">往復 1回</option><option value="2">往復 2回</option><option value="3" selected>往復 3回</option>
-    <option value="5">往復 5回</option><option value="10">往復 10回</option><option value="20">往復 20回</option>
+  <select id="rep" aria-label="往復回数">
+    <option value="1">往復1回</option><option value="2">往復2回</option><option value="3" selected>往復3回</option>
+    <option value="5">往復5回</option><option value="10">往復10回</option><option value="20">往復20回</option>
   </select>
-  <button id="exp" class="wide2 exp" disabled>動画に書き出し</button>
+  <button id="exp" class="exp" disabled>書き出し</button>
 </div>
-<a id="dl" class="dl" hidden>書き出した動画を保存</a>
-<p class="note" id="note">A点とB点を決めて「往復ループ開始」。B→Aは逆再生になります（ループ中は無音）。</p>
+<div class="bar">
+  <p class="note" id="note">A点とB点を決めて「往復ループ開始」。B→Aは逆再生（ループ中は無音）。</p>
+  <a id="dl" class="dl">保存</a>
+</div>
+</div>
 <input type="file" id="file" accept="video/*">
 </div>
 
@@ -139,7 +162,7 @@ $('file').onchange=e=>{
   url=URL.createObjectURL(f);v.src=url;A=B=null;$('empty').style.display='none';
   note.textContent=f.name;
 };
-v.onloadedmetadata=()=>{stage.style.aspectRatio=v.videoWidth+'/'+v.videoHeight;ui()};
+v.onloadedmetadata=()=>ui();
 v.ontimeupdate=ui;v.onplay=ui;v.onpause=ui;
 // fpsの推定
 if('requestVideoFrameCallback' in HTMLVideoElement.prototype){
@@ -239,7 +262,7 @@ function pickMime(){
   const c=['video/mp4;codecs=avc1.640028','video/mp4;codecs=avc1','video/mp4','video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'];
   return c.find(m=>window.MediaRecorder&&MediaRecorder.isTypeSupported(m))||'';
 }
-function setRecUI(on){const e=$('exp');e.classList.toggle('rec',on);e.textContent=on?'録画中…':'動画に書き出し'}
+function setRecUI(on){const e=$('exp');e.classList.toggle('rec',on);e.textContent=on?'録画中…':'書き出し'}
 function beginRec(){
   recMime=pickMime();
   if(!recMime||!cv.captureStream){note.textContent='このブラウザは動画の書き出しに対応していません（Chromeで開いてください）。';return}
@@ -251,16 +274,16 @@ function beginRec(){
     const ext=recMime.includes('mp4')?'mp4':'webm';
     const d=$('dl'),old=d.href;if(old)URL.revokeObjectURL(old);
     const name='abloop_'+new Date().toISOString().slice(0,19).replace(/[-:T]/g,'')+'.'+ext;
-    d.href=URL.createObjectURL(blob);d.download=name;d.hidden=false;
-    d.textContent='保存する（'+ext.toUpperCase()+' '+(blob.size/1048576).toFixed(1)+'MB）';
-    note.textContent='書き出し完了。下のボタンで保存できます。';ui();
+    d.href=URL.createObjectURL(blob);d.download=name;d.classList.add('ready');
+    d.textContent='保存 '+ext.toUpperCase()+' '+(blob.size/1048576).toFixed(1)+'MB';
+    note.textContent='書き出し完了。右の「保存」で保存できます。';ui();
   };
   t=times[0];dir=1;cycles=0;last=performance.now();ctx.drawImage(frames[0],0,0);
   rec.start(500);recOn=true;setRecUI(true);
   note.textContent='録画しています。終わるまでこの画面のままにしてください（往復'+$('rep').value+'回）。';ui();
 }
 $('exp').onclick=()=>{
-  $('dl').hidden=true;
+  $('dl').classList.remove('ready');$('dl').textContent='保存';
   if(looping&&phase==='play'){beginRec();return}
   expPending=true;startLoop();
 };
