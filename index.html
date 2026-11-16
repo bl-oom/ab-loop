@@ -64,6 +64,12 @@ label.bgm.has{background:#f5b83d;color:#1a1300}
 .dl{text-decoration:none;opacity:.35;pointer-events:none}
 .dl.ready{opacity:1;pointer-events:auto;background:var(--a);color:#001418;border-color:var(--a)}
 input[type=file]{display:none}
+.sheet{position:absolute;inset:0;z-index:5;background:rgba(14,15,18,.96);padding:10px;display:flex;flex-direction:column;gap:8px;overflow:auto}
+.sheet[hidden]{display:none}
+.shd{display:flex;justify-content:space-between;align-items:baseline;color:#f5b83d}.shd span{font:600 14px "Overpass Mono",monospace;color:var(--ink)}
+.rg2{background:#f5b83d}
+#bmA,#bmB{background:#f5b83d}#bmA span,#bmB span{background:#f5b83d}
+.okb{background:var(--go);color:#111;border:0}
 /* 横長の画面（タブレット横向きなど）：左プレビュー、右操作 */
 @media (min-width:700px) and (min-aspect-ratio:5/4){
   .wrap{max-width:none;display:grid;grid-template-columns:minmax(0,1fr) 380px;grid-template-rows:minmax(0,1fr);gap:12px;padding:12px}
@@ -97,6 +103,16 @@ input[type=file]{display:none}
   <video id="v" playsinline preload="auto"></video>
   <canvas id="cv"></canvas>
   <div class="badge" id="badge">▶ A→B</div>
+  <div class="sheet" id="sheet" hidden>
+    <div class="shd"><b>裏の音のA・B</b><span id="bnow">0:00.00</span></div>
+    <div class="tl" id="btl"><div class="track"></div><div class="range rg2" id="brange"></div>
+      <div class="mk" id="bmA"><span>A</span></div><div class="mk" id="bmB"><span>B</span></div><div class="head" id="bhead" style="left:0"></div></div>
+    <div class="times"><div><small>A</small><span id="btA">頭</span></div><div><small>B</small><span id="btB">最後</span></div><div><small>長さ</small><span id="bdur">--</span></div></div>
+    <div class="grid">
+      <button id="bback">◀ 1秒</button><button id="bplay">試聴</button><button id="bfwd">1秒 ▶</button><button id="bok" class="okb">閉じる</button>
+      <button class="setA" id="bsetA">ここを音A</button><button class="setB" id="bsetB">ここを音B</button><button id="breset">範囲リセット</button><button id="bclr">音を外す</button>
+    </div>
+  </div>
   <label class="empty" id="empty" for="file"><div><b>動画を選ぶ</b>端末に保存されている動画をタップして開く</div></label>
 </div>
 <div class="side">
@@ -137,7 +153,7 @@ input[type=file]{display:none}
   <select id="bvol" aria-label="裏の音の音量">
     <option value="1" selected>音量100</option><option value="0.7">音量70</option><option value="0.5">音量50</option><option value="0.3">音量30</option>
   </select>
-  <button id="bclr" disabled>音を外す</button>
+  <button id="bopen" disabled>音の範囲</button>
 </div>
 <div class="bar">
   <p class="note" id="note">A点とB点を決めて「往復ループ開始」。B→Aは逆再生。元の音は流れず、「裏の音」を選ぶとその音だけ流れます。</p>
@@ -163,15 +179,46 @@ function audioInit(){
     src.connect(gain);gain.connect(actx.destination);gain.connect(adest);gain.gain.value=+$('bvol').value;
   }catch(e){actx=null}
 }
-function bgmPlay(fromStart){if(!bUrl)return;audioInit();if(actx&&actx.state==='suspended')actx.resume();if(fromStart)bgm.currentTime=0;bgm.play().catch(()=>{})}
-function bgmStop(){bgm.pause()}
+function bgmPlay(fromStart){if(!bUrl)return;audioInit();if(actx&&actx.state==='suspended')actx.resume();if(fromStart)bgm.currentTime=bA||0;bgm.play().catch(()=>{})}
+let bA=null,bB=null,bPrev=false;bgm.loop=false;
+const bEnd=()=>bB!=null?bB:(bgm.duration||0);
+// 音のループ：A→Bまで流れたら瞬時にAへ戻る
+function bWrap(){const a=bA||0;if(bB!=null&&bgm.currentTime>=bB){bgm.currentTime=a}}
+bgm.onended=()=>{if(bPrev||looping){bgm.currentTime=bA||0;bgm.play().catch(()=>{})}};
+bgm.ontimeupdate=()=>{bWrap();bui()};
+(function bw(){if(!bgm.paused)bWrap();if(!$('sheet').hidden)bui();requestAnimationFrame(bw)})();
+const bpct=x=>((bgm.duration?x/bgm.duration:0)*100)+'%';
+function bui(){
+  const d=bgm.duration||0;$('bdur').textContent=d?fmt(d):'--';$('bnow').textContent=fmt(bgm.currentTime);
+  $('bhead').style.left=bpct(bgm.currentTime);
+  $('btA').textContent=bA!=null?fmt(bA):'頭';$('btB').textContent=bB!=null?fmt(bB):'最後';
+  $('bmA').style.display=bA!=null?'block':'none';$('bmA').style.left=bpct(bA||0);
+  $('bmB').style.display=bB!=null?'block':'none';$('bmB').style.left=bpct(bB||0);
+  const a=bA||0,b=bEnd();const rg=$('brange');
+  if(d&&(bA!=null||bB!=null)){rg.style.display='block';rg.style.left=bpct(a);rg.style.width=((b-a)/d*100)+'%'}else rg.style.display='none';
+  $('bplay').textContent=(!bgm.paused&&bPrev)?'停止':'試聴';
+}
+bgm.onloadedmetadata=bui;
+function bseek(x){const d=bgm.duration||0;bgm.currentTime=Math.max(0,Math.min(d,x));bui()}
+$('bopen').onclick=()=>{$('sheet').hidden=false;bui()};
+$('bok').onclick=()=>{if(bPrev&&!looping){bgm.pause()}bPrev=false;$('sheet').hidden=true;bui()};
+$('bplay').onclick=()=>{audioInit();if(actx&&actx.state==='suspended')actx.resume();
+  if(!bgm.paused&&bPrev){bgm.pause();bPrev=false}else{bPrev=true;if(bB!=null&&bgm.currentTime>=bB||bgm.currentTime<(bA||0))bgm.currentTime=bA||0;bgm.play().catch(()=>{})}bui()};
+$('bback').onclick=()=>bseek(bgm.currentTime-1);
+$('bfwd').onclick=()=>bseek(bgm.currentTime+1);
+$('bsetA').onclick=()=>{bA=bgm.currentTime;if(bB!=null&&bB<=bA)bB=null;bui()};
+$('bsetB').onclick=()=>{const x=bgm.currentTime;if(x>(bA||0)+0.05){bB=x;bgm.currentTime=bA||0}bui()};
+$('breset').onclick=()=>{bA=null;bB=null;bui()};
+{const t2=$('btl');const sk=e=>{const r=t2.getBoundingClientRect();bseek((e.clientX-r.left)/r.width*(bgm.duration||0))};
+ t2.onpointerdown=e=>{t2.setPointerCapture(e.pointerId);sk(e);t2.onpointermove=sk};t2.onpointerup=()=>{t2.onpointermove=null}}
+function bgmStop(){if(!bPrev)bgm.pause()}
 $('bfile').onchange=e=>{
   const f=e.target.files[0];if(!f)return;
   if(bUrl)URL.revokeObjectURL(bUrl);bUrl=URL.createObjectURL(f);bgm.src=bUrl;
-  const n=$('bname');n.textContent='♪ '+f.name;n.classList.add('has');$('bclr').disabled=false;
+  const n=$('bname');n.textContent='♪ '+f.name;n.classList.add('has');$('bclr').disabled=false;$('bopen').disabled=false;bA=null;bB=null;
   audioInit();if(looping&&phase)bgmPlay(true);
 };
-$('bclr').onclick=()=>{bgmStop();bgm.removeAttribute('src');bgm.load();if(bUrl)URL.revokeObjectURL(bUrl);bUrl=null;
+$('bclr').onclick=()=>{bgmStop();bA=null;bB=null;$('sheet').hidden=true;$('bopen').disabled=true;bui();bgm.removeAttribute('src');bgm.load();if(bUrl)URL.revokeObjectURL(bUrl);bUrl=null;
   const n=$('bname');n.textContent='♪ 裏の音を選ぶ';n.classList.remove('has');$('bclr').disabled=true;$('bfile').value=''};
 $('bvol').onchange=()=>{const x=+$('bvol').value;if(gain)gain.gain.value=x;else bgm.volume=x};
 let looping=false,phase='',frames=[],times=[],raf=0,t=0,dir=1,last=0,vfcId=0,cancelCap=null;
