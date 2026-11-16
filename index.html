@@ -237,8 +237,8 @@ function loadAudio(f,a,b){
   if(bUrl)URL.revokeObjectURL(bUrl);aFile=f;bUrl=URL.createObjectURL(f);bgm.src=bUrl;
   const n=$('bname');n.textContent='♪ '+f.name;n.classList.add('has');$('bclr').disabled=false;$('bopen').disabled=false;bA=a??null;bB=b??null;
 }
-$('bfile').onchange=e=>{const f=e.target.files[0];if(!f)return;loadAudio(f);audioInit();if(looping&&phase)bgmPlay(true)};
-$('bclr').onclick=()=>{bgmStop();aFile=null;bA=null;bB=null;$('sheet').hidden=true;$('bopen').disabled=true;bui();bgm.removeAttribute('src');bgm.load();if(bUrl)URL.revokeObjectURL(bUrl);bUrl=null;
+$('bfile').onchange=e=>{const f=e.target.files[0];if(!f)return;e.target.value='';aHandle=null;if(pend&&pend.step==='a'){pendAudio(f);return}loadAudio(f);audioInit();if(looping&&phase)bgmPlay(true)};
+$('bclr').onclick=()=>{bgmStop();aFile=null;aHandle=null;bA=null;bB=null;$('sheet').hidden=true;$('bopen').disabled=true;bui();bgm.removeAttribute('src');bgm.load();if(bUrl)URL.revokeObjectURL(bUrl);bUrl=null;
   const n=$('bname');n.textContent='♪ 裏の音を選ぶ';n.classList.remove('has');$('bclr').disabled=true;$('bfile').value=''};
 $('bvol').onchange=()=>{const x=+$('bvol').value;if(gain)gain.gain.value=x;else bgm.volume=x};
 let looping=false,phase='',frames=[],times=[],raf=0,t=0,dir=1,last=0,vfcId=0,cancelCap=null;
@@ -265,7 +265,7 @@ function loadVideo(f,a,b){
   url=URL.createObjectURL(f);v.src=url;A=B=null;pendA=a??null;pendB=b??null;$('empty').style.display='none';
   note.textContent=f.name;
 }
-$('file').onchange=e=>{const f=e.target.files[0];if(!f)return;curPid=null;loadVideo(f)};
+$('file').onchange=e=>{const f=e.target.files[0];if(!f)return;e.target.value='';vHandle=null;if(pend&&pend.step==='v'){pendVideo(f);return}curPid=null;loadVideo(f)};
 v.onloadedmetadata=()=>{if(pendA!=null){A=pendA;B=pendB;v.currentTime=A}pendA=pendB=null;ui()};
 v.ontimeupdate=ui;v.onplay=ui;v.onpause=ui;
 // fpsの推定
@@ -392,52 +392,82 @@ $('exp').onclick=()=>{
   if(looping&&phase==='play'){beginRec();return}
   expPending=true;startLoop();
 };
-// ===== プロジェクト保存（この端末のブラウザ内 IndexedDB）=====
+// ===== プロジェクト保存：動画データはコピーせず「ファイルへのつながり」と設定だけを保存 =====
+let vHandle=null,aHandle=null,pend=null;
+const VEXT=['.mp4','.mov','.m4v','.webm','.mkv','.3gp'],AEXT=['.mp3','.m4a','.aac','.wav','.ogg','.flac','.opus'];
+const canPick=!!window.showOpenFilePicker;
+async function pick(kind){
+  if(!canPick){$(kind==='v'?'file':'bfile').click();return}
+  try{const acc=kind==='v'?{'video/*':VEXT}:{'audio/*':AEXT,'video/*':VEXT};
+    const [h]=await showOpenFilePicker({types:[{description:kind==='v'?'動画':'音声・動画',accept:acc}],excludeAcceptAllOption:false});
+    const f=await h.getFile();
+    if(kind==='v'){vHandle=h;if(pend&&pend.step==='v'){pendVideo(f);return}curPid=null;loadVideo(f)}
+    else{aHandle=h;if(pend&&pend.step==='a'){pendAudio(f);return}loadAudio(f);audioInit();if(looping&&phase)bgmPlay(true)}
+  }catch(e){/* キャンセル */}
+}
+if(canPick){document.querySelectorAll('label[for=file],label[for=bfile]').forEach(l=>l.addEventListener('click',e=>{e.preventDefault();pick(l.htmlFor==='file'?'v':'a')}))}
 let dbp=null;
-function db(){if(!dbp)dbp=new Promise((res,rej)=>{const q=indexedDB.open('abloop',1);q.onupgradeneeded=()=>q.result.createObjectStore('projects',{keyPath:'id',autoIncrement:true});q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)});return dbp}
-async function tx(mode,fn){const d=await db();return new Promise((res,rej)=>{const t=d.transaction('projects',mode);const st=t.objectStore('projects');const out=fn(st);t.oncomplete=()=>res(out&&out.result!==undefined?out.result:out);t.onerror=()=>rej(t.error)})}
+function db(){if(!dbp)dbp=new Promise((res,rej)=>{const q=indexedDB.open('abloop',2);q.onupgradeneeded=()=>{const d=q.result;if(d.objectStoreNames.contains('projects'))d.deleteObjectStore('projects');d.createObjectStore('projects',{keyPath:'id',autoIncrement:true})};q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)});return dbp}
+async function tx(mode,fn){const d=await db();return new Promise((res,rej)=>{const t=d.transaction('projects',mode);const out=fn(t.objectStore('projects'));t.oncomplete=()=>res(out.result);t.onerror=()=>rej(t.error)})}
 const pAll=()=>tx('readonly',st=>st.getAll());
 const pGet=id=>tx('readonly',st=>st.get(id));
 const pPut=rec=>tx('readwrite',st=>st.put(rec));
 const pDel=id=>tx('readwrite',st=>st.delete(id));
-const mb=n=>(n/1048576).toFixed(n>1e8?0:1)+'MB';
 const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-function thumb(){try{if(!v.videoWidth)return'';const c=document.createElement('canvas');c.width=160;c.height=Math.round(160*v.videoHeight/v.videoWidth);c.getContext('2d').drawImage(looping?cv:v,0,0,c.width,c.height);return c.toDataURL('image/jpeg',.7)}catch(e){return''}}
+function thumb(){try{if(!v.videoWidth)return'';const c=document.createElement('canvas');c.width=160;c.height=Math.round(160*v.videoHeight/v.videoWidth);c.getContext('2d').drawImage(looping?cv:v,0,0,c.width,c.height);return c.toDataURL('image/jpeg',.6)}catch(e){return''}}
+const info=t=>{$('pinfo').textContent=t};
 async function pRender(){
   const L=$('plist');let list=[];
   try{list=(await pAll()).sort((a,b)=>b.date-a.date)}catch(e){L.innerHTML='<p class="pinfo">保存機能が使えません（ブラウザの設定を確認してください）。</p>';return}
   if(!list.length){L.innerHTML='<p class="pinfo">まだ保存されたプロジェクトはありません。</p>';return}
-  L.innerHTML=list.map(p=>{const d=new Date(p.date);const size=(p.video?p.video.size:0)+(p.audio?p.audio.size:0);
+  L.innerHTML=list.map(p=>{const d=new Date(p.date);
     return '<div class="pi'+(p.id===curPid?' cur':'')+'">'+(p.thumb?'<img src="'+p.thumb+'" alt="">':'<div class="ph"></div>')+
-    '<div><b>'+esc(p.name)+'</b><small>'+(d.getMonth()+1)+'/'+d.getDate()+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')+' ・ '+mb(size)+(p.audio?' ・ ♪あり':'')+'</small></div>'+
+    '<div><b>'+esc(p.name)+'</b><small>'+(d.getMonth()+1)+'/'+d.getDate()+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')+' ・ '+esc(p.vName)+(p.aName?' ・ ♪'+esc(p.aName):'')+'</small></div>'+
     '<button data-open="'+p.id+'">開く</button><button class="del" data-del="'+p.id+'">削除</button></div>'}).join('');
 }
-$('popen').onclick=()=>{$('sheet').hidden=true;$('psheet').hidden=false;
+function showStep(){
+  const p=pend.p,isV=pend.step==='v',nm=isV?p.vName:p.aName;
+  info((isV?'動画':'裏の音')+'のファイルを選んでください：「'+nm+'」（同じファイルを選ぶとA・B点などが戻ります）');
+  $('plist').innerHTML='<button class="okb" id="pstep" style="height:52px">'+(isV?'動画「':'♪ 裏の音「')+esc(nm)+'」を選ぶ</button><button id="pcancel" style="margin-top:6px">やめる</button>';
+  $('pstep').onclick=()=>pick(pend.step);$('pcancel').onclick=()=>{pend=null;info('');pRender()};
+}
+async function fromHandle(h){
+  if(!h||!h.getFile)return null;
+  try{let st=await h.queryPermission({mode:'read'});if(st!=='granted')st=await h.requestPermission({mode:'read'});if(st!=='granted')return null;return await h.getFile()}catch(e){return null}
+}
+function applySettings(p){curPid=p.id;$('pname').value=p.name;['spd','q','rep','bvol'].forEach(k=>{if(p[k]!=null)$(k).value=p[k]});$('bvol').onchange()}
+function pendVideo(f){const p=pend.p;const same=f.name===p.vName&&(!p.vSize||f.size===p.vSize);
+  loadVideo(f,p.A,p.B);note.textContent=same?'プロジェクト「'+p.name+'」を開きました。':'選んだ動画が保存時と違うかもしれません（A・B点はそのまま使います）。';
+  if(p.aName){pend.step='a';showStep()}else{pend=null;$('psheet').hidden=true}}
+function pendAudio(f){const p=pend.p;loadAudio(f,p.bA,p.bB);pend=null;$('psheet').hidden=true}
+async function openP(p){
+  applySettings(p);pend=null;$('bclr').onclick();
+  const vf=await fromHandle(p.vh);
+  if(!vf){pend={p,step:'v'};showStep();return}
+  vHandle=p.vh;loadVideo(vf,p.A,p.B);note.textContent='プロジェクト「'+p.name+'」を開きました。';
+  if(p.aName){const af=await fromHandle(p.ah);
+    if(af){aHandle=p.ah;loadAudio(af,p.bA,p.bB)}else{pend={p,step:'a'};showStep();return}}
+  $('psheet').hidden=true;
+}
+$('popen').onclick=()=>{$('sheet').hidden=true;$('psheet').hidden=false;pend=null;
   if(!$('pname').value)$('pname').value=vFile?vFile.name.replace(/\.[^.]+$/,''):'';
-  $('psave').textContent=curPid?'上書き保存':'保存';$('pinfo').textContent='動画・裏の音・A/B点・速度などをまとめてこの端末に保存します。';pRender()};
-$('pclose').onclick=()=>{$('psheet').hidden=true};
+  $('psave').textContent=curPid?'上書き保存':'保存';info('動画ファイルはコピーせず、どのファイルか・A/B点・速度などの設定だけを保存します。');pRender()};
+$('pclose').onclick=()=>{pend=null;$('psheet').hidden=true};
 $('psave').onclick=async()=>{
-  if(!vFile){$('pinfo').textContent='先に動画を選んでください。';return}
+  if(!vFile){info('先に動画を選んでください。');return}
   const name=($('pname').value||vFile.name).trim();
-  const rec={name,date:Date.now(),video:vFile,audio:aFile,A,B,bA,bB,spd:$('spd').value,q:$('q').value,rep:$('rep').value,bvol:$('bvol').value,thumb:thumb()};
+  const rec={name,date:Date.now(),vName:vFile.name,vSize:vFile.size,vh:vHandle||null,aName:aFile?aFile.name:null,aSize:aFile?aFile.size:null,ah:aFile?aHandle:null,
+    A,B,bA,bB,spd:$('spd').value,q:$('q').value,rep:$('rep').value,bvol:$('bvol').value,thumb:thumb()};
   if(curPid){const old=await pGet(curPid).catch(()=>null);if(old&&old.name===name)rec.id=curPid}
-  $('pinfo').textContent='保存しています…';
-  try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();
-    const id=await pPut(rec);curPid=rec.id||id;$('psave').textContent='上書き保存';
-    $('pinfo').textContent='「'+name+'」を保存しました。';pRender()}
-  catch(e){$('pinfo').textContent='保存できませんでした（端末の空き容量を確認してください）。'}
+  try{const id=await pPut(rec);curPid=rec.id||id;$('psave').textContent='上書き保存';
+    info('「'+name+'」を保存しました。'+(rec.vh?'':'（開くときは同じ動画をもう一度選ぶと設定が戻ります）'));pRender()}
+  catch(e){info('保存できませんでした。')}
 };
 $('plist').onclick=async e=>{
   const o=e.target.closest('[data-open]'),d=e.target.closest('[data-del]');
-  if(o){const p=await pGet(+o.dataset.open);if(!p)return;
-    curPid=p.id;$('pname').value=p.name;
-    ['spd','q','rep','bvol'].forEach(k=>{if(p[k]!=null)$(k).value=p[k]});
-    $('bvol').onchange();
-    loadVideo(p.video,p.A,p.B);
-    if(p.audio)loadAudio(p.audio,p.bA,p.bB);else $('bclr').onclick();
-    $('psheet').hidden=true;note.textContent='プロジェクト「'+p.name+'」を開きました。';}
-  if(d){const b=d;if(b.dataset.sure){await pDel(+b.dataset.del);if(curPid===+b.dataset.del)curPid=null;pRender()}
-    else{b.dataset.sure=1;b.textContent='本当に';setTimeout(()=>{if(b.isConnected){delete b.dataset.sure;b.textContent='削除'}},3000)}}
+  if(o){const p=await pGet(+o.dataset.open);if(p)openP(p)}
+  if(d){if(d.dataset.sure){await pDel(+d.dataset.del);if(curPid===+d.dataset.del)curPid=null;pRender()}
+    else{d.dataset.sure=1;d.textContent='本当に';setTimeout(()=>{if(d.isConnected){delete d.dataset.sure;d.textContent='削除'}},3000)}}
 };
 document.addEventListener('visibilitychange',()=>{last=performance.now()});
 ui();
