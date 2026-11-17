@@ -97,11 +97,22 @@ label.bgm.has{background:#f5b83d;color:#1a1300}
 input[type=file]{display:none}
 select.nat{display:none}
 [hidden]{display:none!important}
-.selb{padding-right:16px!important}
+.selb{padding-right:16px!important;white-space:nowrap;font-size:12.5px!important;letter-spacing:-.02em}
 .selb{position:relative}
 .selb::after{content:"";position:absolute;right:8px;top:50%;width:6px;height:6px;border-right:2px solid var(--mute);border-bottom:2px solid var(--mute);transform:translateY(-70%) rotate(45deg)}
 .sheet.pick{z-index:7}
-.picklist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.picklist{display:grid;grid-template-columns:minmax(0,1fr);gap:6px}
+.elab{color:var(--mute);font-size:12px;margin:2px 2px -2px}
+.opt.sel,.qlist button.sel{background:linear-gradient(90deg,var(--a),var(--b));color:#fff;border:0;text-shadow:0 1px 2px #0005}
+.qlist{display:grid;gap:6px}
+.repwrap{position:relative;height:50px;flex:none}
+.repsl{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;height:50px;padding:0 calc(50% - 30px);scrollbar-width:none;-webkit-mask:linear-gradient(90deg,transparent,#000 22%,#000 78%,transparent)}
+.repsl::-webkit-scrollbar{display:none}
+.repsl button{flex:0 0 60px;scroll-snap-align:center;height:50px;border:0;background:none;font:700 17px "Overpass Mono",monospace;color:var(--mute);padding:0}
+.repsl button.sel{color:#fff;font-size:20px}
+.repmark{position:absolute;left:50%;top:0;width:60px;height:50px;margin-left:-30px;border-radius:12px;border:1.5px solid transparent;background:linear-gradient(90deg,var(--a),var(--b)) border-box;-webkit-mask:linear-gradient(#000 0 0) padding-box exclude,linear-gradient(#000 0 0);mask:linear-gradient(#000 0 0) padding-box exclude,linear-gradient(#000 0 0);pointer-events:none}
+.repwrap.off .repsl button{color:#4a4f5a}.repwrap.off .repmark{opacity:.3}
+.estart{position:sticky;bottom:0;height:52px;flex:none;box-shadow:0 -10px 14px var(--bg)}
 .picklist button.sel{background:linear-gradient(90deg,var(--a),var(--b));color:#fff;border:0;text-shadow:0 1px 2px #0005}
 .sheet{position:absolute;inset:0;z-index:5;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:8px;overflow:auto}
 .sheet[hidden]{display:none}
@@ -169,15 +180,15 @@ select.nat{display:none}
   </div>
   <div class="sheet" id="esheet" hidden>
     <div class="shd"><b>レンダリング</b><button id="eclose" class="okb mini">閉じる</button></div>
-    <label class="erow"><span>回数</span><select id="rep" aria-label="往復回数">
-    <option value="audio" selected>音声合わせ</option><option value="1">1回</option><option value="2">2回</option><option value="3">3回</option>
-    <option value="5">5回</option><option value="10">10回</option><option value="20">20回</option>
-  </select></label>
-    <label class="erow"><span>画質</span><select id="q" aria-label="画質">
-    <option value="540">軽め（540p）</option><option value="720">標準（720p）</option><option value="1080" selected>高め（1080p）</option><option value="src">素材と同じ</option>
-  </select></label>
+    <select id="rep" class="nat" aria-label="回数"><option value="audio" selected>音声合わせ</option><option value="1">1回</option><option value="2">2回</option><option value="3">3回</option><option value="4">4回</option><option value="5">5回</option><option value="6">6回</option><option value="7">7回</option><option value="8">8回</option><option value="9">9回</option><option value="10">10回</option><option value="11">11回</option><option value="12">12回</option><option value="13">13回</option><option value="14">14回</option><option value="15">15回</option><option value="16">16回</option><option value="17">17回</option><option value="18">18回</option><option value="19">19回</option><option value="20">20回</option><option value="21">21回</option><option value="22">22回</option><option value="23">23回</option><option value="24">24回</option><option value="25">25回</option><option value="26">26回</option><option value="27">27回</option><option value="28">28回</option><option value="29">29回</option><option value="30">30回</option></select>
+    <select id="q" class="nat" aria-label="画質"><option value="src" selected>素材と同じ</option><option value="240">低め（240p）</option><option value="720">標準（720p）</option><option value="1080">高め（1080p）</option></select>
+    <small class="elab">回数</small>
+    <button type="button" id="repAudio" class="opt">音声合わせ</button>
+    <div class="repwrap" id="repwrap"><div class="repmark"></div><div class="repsl" id="repsl"></div></div>
+    <small class="elab">画質</small>
+    <div class="qlist" id="qlist"></div>
     <p class="pinfo">速度・音（元の音／裏の音と音量）・往復／一方向は、今の設定のままレンダリングします。</p>
-    <button id="estart" class="grad" style="height:52px">レンダリング開始</button>
+    <button id="estart" class="grad estart">レンダリング開始</button>
   </div>
   <div class="sheet" id="psheet" hidden>
     <div class="shd"><b>プロジェクト</b><button id="pclose" class="okb mini">閉じる</button></div>
@@ -216,8 +227,7 @@ select.nat{display:none}
   <button id="back">◀ 1コマ</button>
   <button id="fwd">1コマ ▶</button>
   <select id="spd" aria-label="速度">
-    <option value="0.25">速度0.25</option><option value="0.5">速度0.5</option>
-    <option value="1" selected>速度1倍</option><option value="1.5">速度1.5</option><option value="2">速度2倍</option>
+    <option value="0.25">0.25倍</option><option value="0.5">0.5倍</option><option value="1" selected>1倍（標準）</option><option value="1.5">1.5倍</option><option value="2">2倍</option><option value="3">3倍</option>
   </select>
   <label class="btn" for="file">動画変更</label>
   <button class="go" id="go" disabled><svg class="gi" viewBox="0 0 20 20" aria-hidden="true"><path d="M6 4.2v11.6c0 .6.7 1 1.2.7l9-5.8c.5-.3.5-1 0-1.3l-9-5.8C6.7 3.2 6 3.6 6 4.2z" fill="currentColor"/></svg><span>ループ開始</span></button>
@@ -230,7 +240,7 @@ select.nat{display:none}
 </div>
 <div class="bar">
   <p class="note" id="note">A点とB点を決めて「ループ開始」。音は「元の音」（範囲をA→Bで繰り返し）か「裏の音」。A・B未指定なら動画全体。右のアイコンで往復（逆再生で戻る）と一方向を切り替え。元の音は流れません。</p>
-  <a id="dl" class="dl">↓ 動画を保存</a>
+  <a id="dl" class="dl">↓ もう一度保存</a>
 </div>
 </div>
 <input type="file" id="file" accept="video/*">
@@ -485,12 +495,28 @@ function beginRec(){
   recOnce=$('rep').value==='audio';audioDone=false;bgmPlay(true);rec.start(500);recOn=true;setRecUI(true);
   note.textContent='録画しています。終わるまでこの画面のままにしてください（'+(recOnce?'音の長さ＋Aに戻るまで':'往復'+$('rep').value+'回')+'）。';ui();
 }
-$('exp').onclick=()=>{if(recOn)return;$('sheet').hidden=true;$('psheet').hidden=true;$('esheet').hidden=false};
+$('exp').onclick=()=>{if(recOn)return;$('sheet').hidden=true;$('psheet').hidden=true;$('pick').hidden=true;$('esheet').hidden=false;esheetOpen()};
 $('eclose').onclick=()=>{$('esheet').hidden=true};
+// レンダリング画面：回数（音声合わせ／1〜30回のスライダー）と画質
+let lastNum=3,repIgnore=false,repT=0;
+const RS=$('repsl');RS.innerHTML=Array.from({length:30},(_,i)=>'<button type="button" data-n="'+(i+1)+'">'+(i+1)+'</button>').join('');
+const ITEM=60;
+function repScrollTo(n,smooth){repIgnore=true;RS.scrollTo({left:(n-1)*ITEM,behavior:smooth?'smooth':'auto'});clearTimeout(repT);repT=setTimeout(()=>{repIgnore=false},smooth?450:80)}
+function repPaint(){const isA=$('rep').value==='audio';$('repAudio').classList.toggle('sel',isA);$('repwrap').classList.toggle('off',isA);
+  const n=isA?lastNum:+$('rep').value;[...RS.children].forEach(b=>b.classList.toggle('sel',!isA&&+b.dataset.n===n))}
+function setRep(v){$('rep').value=String(v);if(v!=='audio')lastNum=+v;repPaint()}
+$('repAudio').onclick=()=>setRep('audio');
+RS.addEventListener('scroll',()=>{if(repIgnore)return;clearTimeout(repT);repT=setTimeout(()=>{const n=Math.max(1,Math.min(30,Math.round(RS.scrollLeft/ITEM)+1));setRep(n)},120)});
+RS.onclick=e=>{const b=e.target.closest('[data-n]');if(!b)return;setRep(+b.dataset.n);repScrollTo(+b.dataset.n,true)};
+function qLabel(v){if(v==='src'){const w=v2w();return '素材と同じ（'+(w?w:'動画の解像度')+'）'}return $('q').querySelector('option[value="'+v+'"]').text}
+function v2w(){return v.videoWidth?Math.min(v.videoWidth,v.videoHeight)+'p':''}
+function qPaint(){$('qlist').innerHTML=[...$('q').options].map(o=>'<button type="button" data-v="'+o.value+'"'+(o.value===$('q').value?' class="sel"':'')+'>'+qLabel(o.value)+'</button>').join('')}
+$('qlist').onclick=e=>{const b=e.target.closest('[data-v]');if(!b)return;$('q').value=b.dataset.v;qPaint()};
+function esheetOpen(){if($('rep').value!=='audio')lastNum=+$('rep').value;repPaint();qPaint();requestAnimationFrame(()=>repScrollTo(lastNum,false))}
 $('estart').onclick=()=>{$('esheet').hidden=true;startExport()};
 function startExport(){
   if($('rep').value==='audio'&&!hasAud()){note.textContent='「音声合わせ」でレンダリングするには、「元の音」をオンにするか「裏の音」を選んでください。';return}
-  $('dl').classList.remove('ready');$('dl').textContent='↓ 動画を保存';
+  $('dl').classList.remove('ready');$('dl').textContent='↓ もう一度保存';
   if(looping&&phase==='play'&&cacheQ===$('q').value){beginRec();return}
   if(looping)stopLoop();
   expPending=true;startLoop();
@@ -581,23 +607,23 @@ function saveLast(){
   const o={name:$('pname').value||vFile.name.replace(/\.[^.]+$/,''),id:curPid,vName:vFile.name,vSize:vFile.size,aName:aFile?aFile.name:null,
     A,B,bA,bB,spd:$('spd').value,q:$('q').value,rep:$('rep').value,bvol:$('bvol').value,mode:$('mode').dataset.m,orig:useOrig};
   const j=JSON.stringify(o);if(j===lastSaved)return;lastSaved=j;
-  try{localStorage.setItem(LKEY,JSON.stringify({...o,sv:2,date:Date.now()}))}catch(e){}
+  try{localStorage.setItem(LKEY,JSON.stringify({...o,sv:3,date:Date.now()}))}catch(e){}
 }
 setInterval(saveLast,1500);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)saveLast()});
 window.addEventListener('pagehide',saveLast);
 {let last=null;try{last=JSON.parse(localStorage.getItem(LKEY)||'null')}catch(e){}
- if(last){(last.sv===2?['spd','q','rep']:['spd']).forEach(k=>{if(last[k]!=null&&[...$(k).options].some(o=>o.value==last[k]))$(k).value=last[k]});if(last.bvol!=null){$('bvol').value=last.bvol;$('bvol').oninput()}if(last.mode)setMode(last.mode);if(last.orig===false&&!last.aName){useOrig=false;syncSrc()}}
+ if(last){(last.sv===3?['spd','q','rep']:['spd']).forEach(k=>{if(last[k]!=null&&[...$(k).options].some(o=>o.value==last[k]))$(k).value=last[k]});if(last.bvol!=null){$('bvol').value=last.bvol;$('bvol').oninput()}if(last.mode)setMode(last.mode);if(last.orig===false&&!last.aName){useOrig=false;syncSrc()}}
  if(last&&last.vName){const b=$('resume');b.hidden=false;b.textContent='前回の続きから（'+last.vName+'）';
   b.onclick=()=>{applySettings(last);curPid=last.id||null;pend={p:last,step:'v'};note.textContent='前回の動画「'+last.vName+'」を選んでください。';$('file').click()}}}
 document.addEventListener('visibilitychange',()=>{last=performance.now()});
 // Androidの標準の選択画面を使わず、アプリ内の選択パネルで選ぶ
-const SELS={spd:'速度',rep:'回数',q:'画質'};
+const SELS={spd:'速度'};
 function selText(id){const e=$(id);const o=e.options[e.selectedIndex];return o?o.text:''}
-function refreshSels(){for(const id in SELS){const b=$(id+'_b');if(b){const t=selText(id);if(b.textContent!==t)b.textContent=t}}}
+function refreshSels(){for(const id in SELS){const b=$(id+'_b');if(b){const t='速度 '+selText(id).replace('（標準）','');if(b.textContent!==t)b.textContent=t}}}
 for(const id in SELS){
   const e=$(id);e.classList.add('nat');
-  const b=document.createElement('button');b.type='button';b.id=id+'_b';b.className='selb';b.textContent=selText(id);
+  const b=document.createElement('button');b.type='button';b.id=id+'_b';b.className='selb';b.textContent='速度 '+selText(id).replace('（標準）','');
   e.after(b);
   b.onclick=ev=>{ev.preventDefault();
     $('pickT').textContent=SELS[id];
