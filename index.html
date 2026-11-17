@@ -146,7 +146,6 @@ input[type=file]{display:none}
   <label class="empty" id="empty" for="file"><div><b>動画を選ぶ</b>端末に保存されている動画をタップして開く</div></label>
 </div>
 <div class="side">
-<h1>AB往復ループ</h1>
 <div class="tl" id="tl">
   <div class="track"></div>
   <div class="range" id="range"></div>
@@ -167,7 +166,7 @@ input[type=file]{display:none}
   <button class="setA wide2" id="setA">ここをA点に</button>
   <button class="setB wide2" id="setB">ここをB点に</button>
   <button class="go" id="go" disabled>ループ開始</button>
-  <button class="mode" id="mode" data-m="pp">↔ 往復</button>
+  <button class="mode" id="mode" data-m="pp" aria-label="往復" title="往復"><svg viewBox="0 0 48 28" width="44" height="26" aria-hidden="true"><path d="M8 9h30m-6-5 6 5-6 5M40 19H10m6-5-6 5 6 5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
   <select id="spd" aria-label="速度">
     <option value="0.25">速度0.25</option><option value="0.5">速度0.5</option>
     <option value="1" selected>速度1倍</option><option value="1.5">速度1.5</option><option value="2">速度2倍</option>
@@ -188,7 +187,7 @@ input[type=file]{display:none}
 </div>
 <div class="bar">
   <button id="popen" class="pbtn">プロジェクト</button>
-  <p class="note" id="note">A点とB点を決めて「ループ開始」。「↔ 往復」はB→Aを逆再生、「→ 一方向」はA→Bを繰り返します。元の音は流れません。</p>
+  <p class="note" id="note">A点とB点を決めて「ループ開始」。A・B未指定なら動画全体。右のアイコンで往復（逆再生で戻る）と一方向を切り替え。元の音は流れません。</p>
   <a id="dl" class="dl">保存</a>
 </div>
 </div>
@@ -260,15 +259,17 @@ const fmt=s=>{if(s==null||isNaN(s))return'--';const m=Math.floor(s/60),r=s-m*60;
 const dur=()=>v.duration||0;
 const pct=s=>(dur()?s/dur()*100:0)+'%';
 
+// A・B未指定なら動画の頭と最後を使う
+function span(){const d=dur()||0;let a=A??0,b=B??d;if(a>b)[a,b]=[b,a];return[a,b]}
 function ui(){
   const cur=looping?t:v.currentTime;
   $('tN').textContent=fmt(cur);$('head').style.left=pct(cur);
-  $('tA').textContent=fmt(A);$('tB').textContent=fmt(B);
+  $('tA').textContent=A!=null?fmt(A):(v.src?'頭':'--');$('tB').textContent=B!=null?fmt(B):(v.src?'最後':'--');
   $('mA').style.display=A!=null?'block':'none';$('mA').style.left=pct(A||0);
   $('mB').style.display=B!=null?'block':'none';$('mB').style.left=pct(B||0);
   const r=$('range');
-  if(A!=null&&B!=null){r.style.display='block';r.style.left=pct(Math.min(A,B));r.style.width=(Math.abs(B-A)/dur()*100)+'%'}else r.style.display='none';
-  const ok=A!=null&&B!=null&&Math.abs(B-A)>0.1;$('go').disabled=!ok;$('exp').disabled=!ok||recOn||(looping&&phase==='capture');
+  if(dur()){const[ra,rb]=span();r.style.display='block';r.style.left=pct(ra);r.style.width=((rb-ra)/dur()*100)+'%';r.style.opacity=(A==null&&B==null)?'.25':'.55'}else r.style.display='none';
+  const ok=!!dur()&&isFinite(dur())&&(span()[1]-span()[0])>0.1;$('go').disabled=!ok;$('exp').disabled=!ok||recOn||(looping&&phase==='capture');
   $('play').textContent=v.paused?'再生':'一時停止';
 }
 
@@ -316,7 +317,7 @@ function stopLoop(){
 }
 
 async function startLoop(){
-  const a=Math.min(A,B),b=Math.max(A,B);A=a;B=b;
+  const[a,b]=span();if(A!=null&&B!=null){A=a;B=b}
   looping=true;phase='capture';clearCache();bgmPlay(true);
   $('go').textContent='停止';$('go').classList.add('on');
   // 解像度：メモリ上限(約350MB)に収まるよう調整
@@ -365,7 +366,8 @@ async function startLoop(){
 function idx(x){let lo=0,hi=times.length-1;while(lo<hi){const m=(lo+hi+1)>>1;if(times[m]<=x)lo=m;else hi=m-1}return lo}
 
 let fwd=false;
-function setMode(m){fwd=m==='fw';const b=$('mode');b.dataset.m=fwd?'fw':'pp';b.textContent=fwd?'→ 一方向':'↔ 往復';b.classList.toggle('fwd',fwd);if(fwd)dir=1}
+const ICON_PP='<svg viewBox="0 0 48 28" width="44" height="26" aria-hidden="true"><path d="M8 9h30m-6-5 6 5-6 5M40 19H10m6-5-6 5 6 5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>',ICON_FW='<svg viewBox="0 0 48 28" width="44" height="26" aria-hidden="true"><path d="M8 18h30m-6-5 6 5-6 5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M38 9C30 1 16 1 9 8" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="3 3" stroke-linecap="round"/><path d="M8 3v6h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+function setMode(m){fwd=m==='fw';const b=$('mode');b.dataset.m=fwd?'fw':'pp';b.innerHTML=fwd?ICON_FW:ICON_PP;b.setAttribute('aria-label',fwd?'一方向':'往復');b.title=fwd?'一方向':'往復';b.classList.toggle('fwd',fwd);if(fwd)dir=1}
 $('mode').onclick=()=>{if(recOn)return;setMode(fwd?'pp':'fw')};
 function tick(now){
   if(!looping||phase!=='play')return;
