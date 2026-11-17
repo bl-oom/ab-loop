@@ -581,13 +581,13 @@ function saveLast(){
   const o={name:$('pname').value||vFile.name.replace(/\.[^.]+$/,''),id:curPid,vName:vFile.name,vSize:vFile.size,aName:aFile?aFile.name:null,
     A,B,bA,bB,spd:$('spd').value,q:$('q').value,rep:$('rep').value,bvol:$('bvol').value,mode:$('mode').dataset.m,orig:useOrig};
   const j=JSON.stringify(o);if(j===lastSaved)return;lastSaved=j;
-  try{localStorage.setItem(LKEY,JSON.stringify({...o,date:Date.now()}))}catch(e){}
+  try{localStorage.setItem(LKEY,JSON.stringify({...o,sv:2,date:Date.now()}))}catch(e){}
 }
 setInterval(saveLast,1500);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)saveLast()});
 window.addEventListener('pagehide',saveLast);
 {let last=null;try{last=JSON.parse(localStorage.getItem(LKEY)||'null')}catch(e){}
- if(last){['spd','q','rep'].forEach(k=>{if(last[k]!=null&&[...$(k).options].some(o=>o.value==last[k]))$(k).value=last[k]});if(last.bvol!=null){$('bvol').value=last.bvol;$('bvol').oninput()}if(last.mode)setMode(last.mode);if(last.orig===false&&!last.aName){useOrig=false;syncSrc()}}
+ if(last){(last.sv===2?['spd','q','rep']:['spd']).forEach(k=>{if(last[k]!=null&&[...$(k).options].some(o=>o.value==last[k]))$(k).value=last[k]});if(last.bvol!=null){$('bvol').value=last.bvol;$('bvol').oninput()}if(last.mode)setMode(last.mode);if(last.orig===false&&!last.aName){useOrig=false;syncSrc()}}
  if(last&&last.vName){const b=$('resume');b.hidden=false;b.textContent='前回の続きから（'+last.vName+'）';
   b.onclick=()=>{applySettings(last);curPid=last.id||null;pend={p:last,step:'v'};note.textContent='前回の動画「'+last.vName+'」を選んでください。';$('file').click()}}}
 document.addEventListener('visibilitychange',()=>{last=performance.now()});
