@@ -90,9 +90,9 @@ button.orig.on{background:#7ee0a0;color:#06210f}
 label.bgm{border-color:#f5b83d;color:#f5b83d;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;padding:0 8px;display:block;line-height:44px}
 label.bgm.has{background:#f5b83d;color:#1a1300}
 .exp.rec{background:#c62828;border-color:#c62828;color:#fff}
-.bar{display:grid;grid-template-columns:minmax(0,1fr) 110px;gap:6px;align-items:center}
+.bar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px;align-items:center}
 .note{color:var(--mute);font-size:12px;margin:0 2px;height:34px;overflow:hidden;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
-.dl{text-decoration:none;opacity:.35;pointer-events:none}
+.dl{text-decoration:none;opacity:.35;pointer-events:none;white-space:nowrap;padding:0 14px!important;width:auto!important}
 .dl.ready{opacity:1;pointer-events:auto;background:linear-gradient(90deg,var(--a),var(--b));color:#fff;border:0}
 input[type=file]{display:none}
 select.nat{display:none}
@@ -105,13 +105,14 @@ select.nat{display:none}
 .sheet>*{flex:none}
 .elab{color:var(--mute);font-size:12px;margin:2px 2px -2px}
 .opt.sel,.qlist button.sel{background:linear-gradient(90deg,var(--a),var(--b));color:#fff;border:0;text-shadow:0 1px 2px #0005}
-.qlist{display:grid;gap:6px}
-.repwrap{position:relative;height:50px;flex:none}
-.repsl{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;height:50px;padding:0 calc(50% - 30px);scrollbar-width:none;-webkit-mask:linear-gradient(90deg,transparent,#000 22%,#000 78%,transparent)}
+.qlist{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px}
+.qlist button:first-child{grid-column:span 2}
+.repwrap{position:relative;height:35px;flex:none}
+.repsl{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;height:35px;padding:0 calc(50% - 21px);scrollbar-width:none;-webkit-mask:linear-gradient(90deg,transparent,#000 22%,#000 78%,transparent)}
 .repsl::-webkit-scrollbar{display:none}
-.repsl button{flex:0 0 60px;scroll-snap-align:center;height:50px;border:0;background:none;font:700 17px "Overpass Mono",monospace;color:var(--mute);padding:0}
-.repsl button.sel{color:#fff;font-size:20px}
-.repmark{position:absolute;left:50%;top:0;width:60px;height:50px;margin-left:-30px;border-radius:12px;border:1.5px solid transparent;background:linear-gradient(90deg,var(--a),var(--b)) border-box;-webkit-mask:linear-gradient(#000 0 0) padding-box exclude,linear-gradient(#000 0 0);mask:linear-gradient(#000 0 0) padding-box exclude,linear-gradient(#000 0 0);pointer-events:none}
+.repsl button{flex:0 0 42px;scroll-snap-align:center;height:35px;border:0;background:none;font:700 14px "Overpass Mono",monospace;color:var(--mute);padding:0}
+.repsl button.sel{color:#fff;font-size:16px}
+.repmark{position:absolute;left:50%;top:0;width:42px;height:35px;margin-left:-21px;border-radius:9px;border:1.5px solid transparent;background:linear-gradient(90deg,var(--a),var(--b)) border-box;-webkit-mask:linear-gradient(#000 0 0) padding-box exclude,linear-gradient(#000 0 0);mask:linear-gradient(#000 0 0) padding-box exclude,linear-gradient(#000 0 0);pointer-events:none}
 .repwrap.off .repsl button{color:#4a4f5a}.repwrap.off .repmark{opacity:.3}
 .estart{position:sticky;bottom:0;height:52px;flex:none;box-shadow:0 -10px 14px var(--bg)}
 .picklist button.sel{background:linear-gradient(90deg,var(--a),var(--b));color:#fff;border:0;text-shadow:0 1px 2px #0005}
@@ -182,13 +183,12 @@ select.nat{display:none}
   <div class="sheet" id="esheet" hidden>
     <div class="shd"><b>レンダリング</b><button id="eclose" class="okb mini">閉じる</button></div>
     <select id="rep" class="nat" aria-label="回数"><option value="audio" selected>音声合わせ</option><option value="1">1回</option><option value="2">2回</option><option value="3">3回</option><option value="4">4回</option><option value="5">5回</option><option value="6">6回</option><option value="7">7回</option><option value="8">8回</option><option value="9">9回</option><option value="10">10回</option><option value="11">11回</option><option value="12">12回</option><option value="13">13回</option><option value="14">14回</option><option value="15">15回</option><option value="16">16回</option><option value="17">17回</option><option value="18">18回</option><option value="19">19回</option><option value="20">20回</option><option value="21">21回</option><option value="22">22回</option><option value="23">23回</option><option value="24">24回</option><option value="25">25回</option><option value="26">26回</option><option value="27">27回</option><option value="28">28回</option><option value="29">29回</option><option value="30">30回</option></select>
-    <select id="q" class="nat" aria-label="画質"><option value="src" selected>素材と同じ</option><option value="240">低め（240p）</option><option value="720">標準（720p）</option><option value="1080">高め（1080p）</option></select>
+    <select id="q" class="nat" aria-label="画質"><option value="src" selected>素材と同じ</option><option value="720">標準（720p）</option><option value="1080">高め（1080p）</option></select>
     <small class="elab">回数</small>
     <button type="button" id="repAudio" class="opt">音声合わせ</button>
     <div class="repwrap" id="repwrap"><div class="repmark"></div><div class="repsl" id="repsl"></div></div>
     <small class="elab">画質</small>
     <div class="qlist" id="qlist"></div>
-    <p class="pinfo">速度・音（元の音／裏の音と音量）・往復／一方向は、今の設定のままレンダリングします。</p>
     <button id="estart" class="grad estart">レンダリング開始</button>
   </div>
   <div class="sheet" id="psheet" hidden>
@@ -501,7 +501,7 @@ $('eclose').onclick=()=>{$('esheet').hidden=true};
 // レンダリング画面：回数（音声合わせ／1〜30回のスライダー）と画質
 let lastNum=3,repIgnore=false,repT=0;
 const RS=$('repsl');RS.innerHTML=Array.from({length:30},(_,i)=>'<button type="button" data-n="'+(i+1)+'">'+(i+1)+'</button>').join('');
-const ITEM=60;
+const ITEM=42;
 function repScrollTo(n,smooth){repIgnore=true;RS.scrollTo({left:(n-1)*ITEM,behavior:smooth?'smooth':'auto'});clearTimeout(repT);repT=setTimeout(()=>{repIgnore=false},smooth?450:80)}
 function repPaint(){const isA=$('rep').value==='audio';$('repAudio').classList.toggle('sel',isA);$('repwrap').classList.toggle('off',isA);
   const n=isA?lastNum:+$('rep').value;[...RS.children].forEach(b=>b.classList.toggle('sel',!isA&&+b.dataset.n===n))}
@@ -614,7 +614,7 @@ setInterval(saveLast,1500);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)saveLast()});
 window.addEventListener('pagehide',saveLast);
 {let last=null;try{last=JSON.parse(localStorage.getItem(LKEY)||'null')}catch(e){}
- if(last){(last.sv===3?['spd','q','rep']:['spd']).forEach(k=>{if(last[k]!=null&&[...$(k).options].some(o=>o.value==last[k]))$(k).value=last[k]});if(last.bvol!=null){$('bvol').value=last.bvol;$('bvol').oninput()}if(last.mode)setMode(last.mode);if(last.orig===false&&!last.aName){useOrig=false;syncSrc()}}
+ if(last){['spd'].forEach(k=>{if(last[k]!=null&&[...$(k).options].some(o=>o.value==last[k]))$(k).value=last[k]});if(last.bvol!=null){$('bvol').value=last.bvol;$('bvol').oninput()}if(last.mode)setMode(last.mode);if(last.orig===false&&!last.aName){useOrig=false;syncSrc()}}
  if(last&&last.vName){const b=$('resume');b.hidden=false;b.textContent='前回の続きから（'+last.vName+'）';
   b.onclick=()=>{applySettings(last);curPid=last.id||null;pend={p:last,step:'v'};note.textContent='前回の動画「'+last.vName+'」を選んでください。';$('file').click()}}}
 document.addEventListener('visibilitychange',()=>{last=performance.now()});
