@@ -72,10 +72,8 @@ h1{order:-1;font-size:16px;margin:0 2px;font-weight:700;flex:none}
 button,select,.dl{font:700 14px "Zen Kaku Gothic New",sans-serif;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:12px;height:46px;padding:4px 2px;cursor:pointer;display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.15;width:100%}
 label.btn{font:700 14px "Zen Kaku Gothic New",sans-serif;background:var(--panel);border:1px solid var(--line);border-radius:12px;height:46px;display:flex;align-items:center;justify-content:center;text-align:center;cursor:pointer}
 button:active{transform:scale(.97)}
-/* ボタンは全部エンボス調でそろえる */
-button,label.btn,.dl{box-shadow:inset 0 1px 0 rgba(255,255,255,.07),inset 0 -2px 0 rgba(0,0,0,.35),0 2px 5px rgba(0,0,0,.35)}
-.go,.grad,.dl.ready,.opt.sel,.qlist button.sel,.picklist button.sel,button.orig.on,label.bgm.has,.okb{box-shadow:inset 0 1px 0 rgba(255,255,255,.45),inset 0 -3px 0 rgba(0,0,0,.22),0 3px 8px rgba(0,0,0,.4)}
-.repsl button{box-shadow:none}
+/* ボタンは影なしのフラット */
+button,label.btn,.dl{box-shadow:none}
 button:focus-visible,select:focus-visible{outline:2px solid var(--a);outline-offset:2px}
 button:disabled{opacity:.35;cursor:default}
 select{appearance:none;text-align-last:center;font-size:14px}
@@ -118,7 +116,7 @@ select.nat{display:none}
 .repsl button.sel{color:#fff;font-size:16px}
 .repmark{position:absolute;left:50%;top:0;width:42px;height:35px;margin-left:-21px;border-radius:9px;border:1.5px solid transparent;background:linear-gradient(90deg,var(--a),var(--b)) border-box;-webkit-mask:linear-gradient(#000 0 0) padding-box exclude,linear-gradient(#000 0 0);mask:linear-gradient(#000 0 0) padding-box exclude,linear-gradient(#000 0 0);pointer-events:none}
 .repwrap.off .repsl button{color:#4a4f5a}.repwrap.off .repmark{opacity:.3}
-.estart{position:sticky;bottom:0;height:52px;flex:none;box-shadow:0 -10px 14px var(--bg)}
+.estart{height:52px;flex:none}
 .picklist button.sel{background:linear-gradient(90deg,var(--a),var(--b));color:#fff;border:0;text-shadow:0 1px 2px #0005}
 .sheet{position:absolute;inset:0;z-index:5;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:8px;overflow:auto}
 .sheet[hidden]{display:none}
