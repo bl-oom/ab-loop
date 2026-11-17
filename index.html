@@ -52,6 +52,9 @@ h1{order:-1;font-size:16px;margin:0 2px;font-weight:700;flex:none}
 .vol input::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:#fff;margin-top:-7px;box-shadow:0 1px 4px #0008}
 .vol input::-moz-range-track{height:8px;border-radius:4px;background:linear-gradient(90deg,var(--a),var(--b))}
 .vol input::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#fff;border:0}
+.grad{background:linear-gradient(90deg,var(--a),var(--b));color:#fff;border:0;text-shadow:0 1px 2px #0005;font-size:16px}
+#esheet{border-color:transparent;background:linear-gradient(var(--bg),var(--bg)) padding-box,linear-gradient(90deg,var(--a),var(--b)) border-box;border:1.5px solid transparent}
+#esheet .selb{border-color:#3a3f4b}
 .erow{display:grid;grid-template-columns:48px minmax(0,1fr);gap:8px;align-items:center;color:var(--mute);font-size:13px}
 .track{position:absolute;left:0;right:0;top:16px;height:12px;border-radius:6px;background:var(--panel);border:1px solid var(--line)}
 .range{position:absolute;top:16px;height:12px;background:linear-gradient(90deg,var(--a),var(--b));opacity:.55;border-radius:6px;display:none}
@@ -90,7 +93,7 @@ label.bgm.has{background:#f5b83d;color:#1a1300}
 .bar{display:grid;grid-template-columns:minmax(0,1fr) 110px;gap:6px;align-items:center}
 .note{color:var(--mute);font-size:12px;margin:0 2px;height:34px;overflow:hidden;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .dl{text-decoration:none;opacity:.35;pointer-events:none}
-.dl.ready{opacity:1;pointer-events:auto;background:var(--a);color:#001418;border-color:var(--a)}
+.dl.ready{opacity:1;pointer-events:auto;background:linear-gradient(90deg,var(--a),var(--b));color:#fff;border:0}
 input[type=file]{display:none}
 select.nat{display:none}
 [hidden]{display:none!important}
@@ -102,7 +105,8 @@ select.nat{display:none}
 .picklist button.sel{background:linear-gradient(90deg,var(--a),var(--b));color:#fff;border:0;text-shadow:0 1px 2px #0005}
 .sheet{position:absolute;inset:0;z-index:5;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:8px;overflow:auto}
 .sheet[hidden]{display:none}
-.shd{display:flex;justify-content:space-between;align-items:baseline;color:#f5b83d}.shd span{font:600 14px "Overpass Mono",monospace;color:var(--ink)}
+.shd{display:flex;justify-content:space-between;align-items:center}
+.shd b{background:linear-gradient(90deg,var(--a),var(--b));-webkit-background-clip:text;background-clip:text;color:transparent;font-size:16px}.shd span{font:600 14px "Overpass Mono",monospace;color:var(--ink)}
 .rg2{background:#f5b83d}
 #bmA,#bmB{background:#f5b83d}#bmA span,#bmB span{background:#f5b83d}
 .okb{background:var(--go);color:#111;border:0}
@@ -166,14 +170,14 @@ select.nat{display:none}
   <div class="sheet" id="esheet" hidden>
     <div class="shd"><b>レンダリング</b><button id="eclose" class="okb mini">閉じる</button></div>
     <label class="erow"><span>回数</span><select id="rep" aria-label="往復回数">
-    <option value="audio">音声合わせ</option><option value="1">1回</option><option value="2">2回</option><option value="3" selected>3回</option>
+    <option value="audio" selected>音声合わせ</option><option value="1">1回</option><option value="2">2回</option><option value="3">3回</option>
     <option value="5">5回</option><option value="10">10回</option><option value="20">20回</option>
   </select></label>
     <label class="erow"><span>画質</span><select id="q" aria-label="画質">
-    <option value="540">軽め（540p）</option><option value="720" selected>標準（720p）</option><option value="1080">高め（1080p）</option>
+    <option value="540">軽め（540p）</option><option value="720">標準（720p）</option><option value="1080" selected>高め（1080p）</option><option value="src">素材と同じ</option>
   </select></label>
     <p class="pinfo">速度・音（元の音／裏の音と音量）・往復／一方向は、今の設定のままレンダリングします。</p>
-    <button id="estart" class="okb" style="height:52px">レンダリング開始</button>
+    <button id="estart" class="grad" style="height:52px">レンダリング開始</button>
   </div>
   <div class="sheet" id="psheet" hidden>
     <div class="shd"><b>プロジェクト</b><button id="pclose" class="okb mini">閉じる</button></div>
@@ -226,7 +230,7 @@ select.nat{display:none}
 </div>
 <div class="bar">
   <p class="note" id="note">A点とB点を決めて「ループ開始」。音は「元の音」（範囲をA→Bで繰り返し）か「裏の音」。A・B未指定なら動画全体。右のアイコンで往復（逆再生で戻る）と一方向を切り替え。元の音は流れません。</p>
-  <a id="dl" class="dl">保存</a>
+  <a id="dl" class="dl">↓ 動画を保存</a>
 </div>
 </div>
 <input type="file" id="file" accept="video/*">
@@ -390,7 +394,7 @@ async function startLoop(){
   looping=true;phase='capture';clearCache();bgmPlay(true);
   setGo(true);$('go').classList.add('on');
   // 解像度：メモリ上限(約350MB)に収まるよう調整
-  cacheQ=$('q').value;const maxH=+$('q').value,est=(b-a)*Math.max(fps,30)+10;
+  cacheQ=$('q').value;const maxH=$('q').value==='src'?Infinity:+$('q').value,est=(b-a)*Math.max(fps,30)+10;
   let s=Math.min(1,maxH/Math.min(v.videoWidth,v.videoHeight));
   const budget=350e6,need=est*v.videoWidth*v.videoHeight*4*s*s;
   if(need>budget)s*=Math.sqrt(budget/need);
@@ -473,8 +477,9 @@ function beginRec(){
     const d=$('dl'),old=d.href;if(old)URL.revokeObjectURL(old);
     const name='abloop_'+new Date().toISOString().slice(0,19).replace(/[-:T]/g,'')+'.'+ext;
     d.href=URL.createObjectURL(blob);d.download=name;d.classList.add('ready');
-    d.textContent='保存 '+ext.toUpperCase()+' '+(blob.size/1048576).toFixed(1)+'MB';
-    note.textContent='レンダリング完了。右の「保存」で保存できます。';ui();
+    d.textContent='↓ もう一度保存';
+    try{d.click()}catch(e){}
+    note.textContent='レンダリング完了。動画を端末に保存しました（'+ext.toUpperCase()+' '+(blob.size/1048576).toFixed(1)+'MB）。';ui();
   };
   t=times[0];dir=1;cycles=0;last=performance.now();ctx.drawImage(frames[0],0,0);
   recOnce=$('rep').value==='audio';audioDone=false;bgmPlay(true);rec.start(500);recOn=true;setRecUI(true);
@@ -485,7 +490,7 @@ $('eclose').onclick=()=>{$('esheet').hidden=true};
 $('estart').onclick=()=>{$('esheet').hidden=true;startExport()};
 function startExport(){
   if($('rep').value==='audio'&&!hasAud()){note.textContent='「音声合わせ」でレンダリングするには、「元の音」をオンにするか「裏の音」を選んでください。';return}
-  $('dl').classList.remove('ready');$('dl').textContent='保存';
+  $('dl').classList.remove('ready');$('dl').textContent='↓ 動画を保存';
   if(looping&&phase==='play'&&cacheQ===$('q').value){beginRec();return}
   if(looping)stopLoop();
   expPending=true;startLoop();
@@ -582,6 +587,7 @@ setInterval(saveLast,1500);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)saveLast()});
 window.addEventListener('pagehide',saveLast);
 {let last=null;try{last=JSON.parse(localStorage.getItem(LKEY)||'null')}catch(e){}
+ if(last){['spd','q','rep'].forEach(k=>{if(last[k]!=null&&[...$(k).options].some(o=>o.value==last[k]))$(k).value=last[k]});if(last.bvol!=null){$('bvol').value=last.bvol;$('bvol').oninput()}if(last.mode)setMode(last.mode);if(last.orig===false&&!last.aName){useOrig=false;syncSrc()}}
  if(last&&last.vName){const b=$('resume');b.hidden=false;b.textContent='前回の続きから（'+last.vName+'）';
   b.onclick=()=>{applySettings(last);curPid=last.id||null;pend={p:last,step:'v'};note.textContent='前回の動画「'+last.vName+'」を選んでください。';$('file').click()}}}
 document.addEventListener('visibilitychange',()=>{last=performance.now()});
@@ -596,7 +602,7 @@ for(const id in SELS){
   b.onclick=ev=>{ev.preventDefault();
     $('pickT').textContent=SELS[id];
     $('pickL').innerHTML=[...e.options].map((o,i)=>'<button type="button" data-i="'+i+'"'+(i===e.selectedIndex?' class="sel"':'')+'>'+o.text+'</button>').join('');
-    $('pickL').onclick=x=>{const t=x.target.closest('[data-i]');if(!t)return;e.selectedIndex=+t.dataset.i;e.dispatchEvent(new Event('change'));refreshSels();$('pick').hidden=true};
+    $('pickL').onclick=x=>{const t=x.target.closest('[data-i]');if(!t)return;e.selectedIndex=+t.dataset.i;e.dispatchEvent(new Event('change'));refreshSels();[...$('pickL').children].forEach((c,i)=>c.classList.toggle('sel',i===e.selectedIndex));if(id!=='spd')$('pick').hidden=true};
     $('pick').hidden=false};
 }
 $('pickX').onclick=()=>{$('pick').hidden=true};
