@@ -565,6 +565,19 @@ window.addEventListener('pagehide',saveLast);
   b.onclick=()=>{applySettings(last);curPid=last.id||null;pend={p:last,step:'v'};note.textContent='前回の動画「'+last.vName+'」を選んでください。';$('file').click()}}}
 document.addEventListener('visibilitychange',()=>{last=performance.now()});
 // プレビューをタップで全画面（縦横比は保ったまま画面に合わせる）
+// 戻るジェスチャーでアプリが閉じない・前のページに戻らないようにする
+// （戻る操作が来たら、開いているメニューや全画面を閉じるだけにして、ページには留まる）
+{let armed=false;
+ const arm=()=>{if(armed)return;armed=true;try{history.pushState({abl:1},'')}catch(e){}};
+ document.addEventListener('pointerdown',arm,{capture:true});
+ window.addEventListener('popstate',()=>{
+   armed=false;arm();
+   const open=['esheet','psheet','sheet'].find(id=>!$(id).hidden);
+   if(document.fullscreenElement){document.exitFullscreen().catch(()=>{})}
+   else if(open){$(open).hidden=true}
+   else note.textContent='戻る操作は無効にしています（アプリを閉じるときはホームボタンで）。';
+ });
+}
 // プレビューをタップでChromeの全画面（縦横比は保つ）
 async function toggleFS(){
   try{if(document.fullscreenElement){await document.exitFullscreen()}else{await stage.requestFullscreen({navigationUI:'hide'})}}
