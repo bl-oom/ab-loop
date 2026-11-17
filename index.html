@@ -77,6 +77,8 @@ select{appearance:none;text-align-last:center;font-size:14px}
 .mode.fwd{background:#2b2e36}
 .go{grid-column:span 4;height:52px;font-size:18px;background:linear-gradient(90deg,var(--a),var(--b));color:#fff;border:0;text-shadow:0 1px 2px #0005}
 .go:disabled{opacity:.4}
+.go{gap:8px;letter-spacing:.04em}
+.go .gi{width:20px;height:20px;flex:none}
 .go.on{background:linear-gradient(#17191e,#17191e) padding-box,linear-gradient(90deg,var(--a),var(--b)) border-box;border:2px solid transparent;color:#fff;text-shadow:none}
 .wide2{grid-column:span 2}
 .exp{border-color:var(--go);white-space:nowrap;font-size:12.5px;letter-spacing:-.03em;padding:0 2px}
@@ -214,7 +216,7 @@ select.nat{display:none}
     <option value="1" selected>速度1倍</option><option value="1.5">速度1.5</option><option value="2">速度2倍</option>
   </select>
   <label class="btn" for="file">動画変更</label>
-  <button class="go" id="go" disabled>▶ ループ開始</button>
+  <button class="go" id="go" disabled><svg class="gi" viewBox="0 0 20 20" aria-hidden="true"><path d="M6 4.2v11.6c0 .6.7 1 1.2.7l9-5.8c.5-.3.5-1 0-1.3l-9-5.8C6.7 3.2 6 3.6 6 4.2z" fill="currentColor"/></svg><span>ループ開始</span></button>
   <button class="orig on" id="orig" aria-pressed="true">♪ 元の音</button>
   <label class="btn bgm" for="bfile" id="bname">♪ 裏の音</label>
   <button id="bopen" disabled>音の範囲</button>
@@ -308,6 +310,9 @@ const pct=s=>(dur()?s/dur()*100:0)+'%';
 
 // A・B未指定なら動画の頭と最後を使う
 function span(){const d=dur()||0;let a=A??0,b=B??d;if(a>b)[a,b]=[b,a];return[a,b]}
+const IC_PLAY='<svg class="gi" viewBox="0 0 20 20" aria-hidden="true"><path d="M6 4.2v11.6c0 .6.7 1 1.2.7l9-5.8c.5-.3.5-1 0-1.3l-9-5.8C6.7 3.2 6 3.6 6 4.2z" fill="currentColor"/></svg>',IC_PAUSE='<svg class="gi" viewBox="0 0 20 20" aria-hidden="true"><rect x="5.5" y="4" width="2.4" height="12" rx="1.2" fill="currentColor"/><rect x="12.1" y="4" width="2.4" height="12" rx="1.2" fill="currentColor"/></svg>';
+let goState=null;
+function setGo(on=looping){if(goState===on)return;goState=on;$('go').innerHTML=(on?IC_PAUSE:IC_PLAY)+'<span>'+(on?'停止':'ループ開始')+'</span>'}
 function ui(){
   const cur=looping?t:v.currentTime;
   $('tN').textContent=tc(cur);$('head').style.left=pct(cur);
@@ -316,7 +321,7 @@ function ui(){
   const r=$('range');
   if(dur()){const[ra,rb]=span();r.style.display='block';r.style.left=pct(ra);r.style.width=((rb-ra)/dur()*100)+'%';r.style.opacity=(A==null&&B==null)?'.25':'.55'}else r.style.display='none';
   const ok=!!dur()&&isFinite(dur())&&(span()[1]-span()[0])>0.1;$('go').disabled=!ok;$('exp').disabled=!ok||recOn||(looping&&phase==='capture');
-  $('go').textContent=looping?'❚❚ 停止':'▶ ループ開始';if(looping)$('go').disabled=false;
+  setGo();if(looping)$('go').disabled=false;
 }
 
 let vFile=null,pendA=null,pendB=null,curPid=null;
@@ -376,14 +381,14 @@ function stopLoop(){
   looping=false;phase='';cancelAnimationFrame(raf);bgmStop();if(cancelCap)cancelCap();expPending=false;if(recOn){recOn=false;recOnce=false;rec.onstop=null;try{rec.stop()}catch(e){}setRecUI(false)}
   v.pause();v.muted=false;
   const back=t;clearCache();stage.classList.remove('looping');
-  v.currentTime=back;$('go').textContent='▶ ループ開始';$('go').classList.remove('on');
+  v.currentTime=back;setGo(false);$('go').classList.remove('on');
   note.textContent='停止しました。';ui();
 }
 
 async function startLoop(){
   const[a,b]=span();if(A!=null&&B!=null){A=a;B=b}
   looping=true;phase='capture';clearCache();bgmPlay(true);
-  $('go').textContent='❚❚ 停止';$('go').classList.add('on');
+  setGo(true);$('go').classList.add('on');
   // 解像度：メモリ上限(約350MB)に収まるよう調整
   cacheQ=$('q').value;const maxH=+$('q').value,est=(b-a)*Math.max(fps,30)+10;
   let s=Math.min(1,maxH/Math.min(v.videoWidth,v.videoHeight));
