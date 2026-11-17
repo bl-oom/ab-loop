@@ -38,11 +38,13 @@ h1{order:-1;font-size:16px;margin:0 2px;font-weight:700;flex:none}
 .fsbtn{position:absolute;right:8px;top:8px;z-index:2;width:auto;height:32px;padding:0 10px;font-size:12px;background:rgba(0,0,0,.6);border:1px solid #fff3;display:none}
 .stage.has .fsbtn{display:flex}.stage:fullscreen .fsbtn{display:none}
 .side>*{order:1;flex:none}.side>h1{order:-1}
-.tl{position:relative;height:40px;touch-action:none;cursor:pointer;margin:0 12px}
+.tl{position:relative;height:44px;touch-action:none;cursor:ew-resize;margin:0 14px}
 .track{position:absolute;left:0;right:0;top:16px;height:12px;border-radius:6px;background:var(--panel);border:1px solid var(--line)}
 .range{position:absolute;top:16px;height:12px;background:linear-gradient(90deg,var(--a),var(--b));opacity:.55;border-radius:6px;display:none}
-.mk{position:absolute;top:12px;width:2px;height:24px;margin-left:-1px;display:none}
-.mk span{position:absolute;top:-13px;left:50%;transform:translateX(-50%);font:700 11px "Overpass Mono",monospace;color:#000;border-radius:4px;padding:0 4px}
+.mk{position:absolute;top:14px;width:3px;height:28px;margin-left:-1.5px;display:none}
+.mk.ghost{opacity:.5}
+.mk.drag span{transform:translateX(-50%) scale(1.25)}
+.mk span{position:absolute;top:-14px;left:50%;transform:translateX(-50%);font:700 12px "Overpass Mono",monospace;color:#000;border-radius:5px;padding:1px 7px;transition:transform .1s}
 #mA{background:var(--a)}#mA span{background:var(--a)}#mB{background:var(--b)}#mB span{background:var(--b)}
 .head{position:absolute;top:10px;width:4px;height:24px;margin-left:-2px;background:var(--go);border-radius:2px;box-shadow:0 0 0 2px #0008}
 .times{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;font:600 14px "Overpass Mono",monospace}
@@ -278,8 +280,7 @@ function ui(){
   const cur=looping?t:v.currentTime;
   $('tN').textContent=fmt(cur);$('head').style.left=pct(cur);
   $('tA').textContent=A!=null?fmt(A):(v.src?'頭':'--');$('tB').textContent=B!=null?fmt(B):(v.src?'最後':'--');
-  $('mA').style.display=A!=null?'block':'none';$('mA').style.left=pct(A||0);
-  $('mB').style.display=B!=null?'block':'none';$('mB').style.left=pct(B||0);
+  {const[sa,sb]=span(),on=dur()?'block':'none';$('mA').style.display=on;$('mA').style.left=pct(sa);$('mA').classList.toggle('ghost',A==null);$('mB').style.display=on;$('mB').style.left=pct(sb);$('mB').classList.toggle('ghost',B==null)}
   const r=$('range');
   if(dur()){const[ra,rb]=span();r.style.display='block';r.style.left=pct(ra);r.style.width=((rb-ra)/dur()*100)+'%';r.style.opacity=(A==null&&B==null)?'.25':'.55'}else r.style.display='none';
   const ok=!!dur()&&isFinite(dur())&&(span()[1]-span()[0])>0.1;$('go').disabled=!ok;$('exp').disabled=!ok||recOn||(looping&&phase==='capture');
@@ -312,9 +313,28 @@ $('spd').onchange=()=>{if(looping&&phase==='capture')v.playbackRate=1};
 
 // タイムライン操作
 const tl=$('tl');
-const tlSeek=e=>{if(!dur())return;const r=tl.getBoundingClientRect();seek((e.clientX-r.left)/r.width*dur())};
-tl.onpointerdown=e=>{tl.setPointerCapture(e.pointerId);tlSeek(e);tl.onpointermove=tlSeek};
-tl.onpointerup=()=>{tl.onpointermove=null};
+// タイムラインはA点・B点のつまみを動かす（再生ヘッドは動かさない）
+// 指をバーから下へ離すほど細かく動く（40px以上で1/10、120px以上で1/40）
+let drag=null,seekBusy=false,seekWant=null;
+function previewAt(x){seekWant=x;if(seekBusy)return;seekBusy=true;v.currentTime=x}
+v.addEventListener('seeked',()=>{seekBusy=false;if(seekWant!=null&&Math.abs(v.currentTime-seekWant)>0.001){const x=seekWant;seekWant=null;previewAt(x)}else seekWant=null});
+tl.onpointerdown=e=>{
+  if(!dur()||recOn)return;stopLoop();v.pause();
+  const r=tl.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*dur(),[a,b]=span();
+  const which=Math.abs(x-a)<=Math.abs(x-b)?'A':'B';
+  drag={which,lastX:e.clientX,val:which==='A'?a:b};
+  tl.setPointerCapture(e.pointerId);$('m'+which).classList.add('drag');previewAt(drag.val);ui();
+};
+tl.onpointermove=e=>{
+  if(!drag)return;const r=tl.getBoundingClientRect();
+  const dy=e.clientY-r.bottom,k=dy>120?1/40:dy>40?0.1:1;
+  const dx=e.clientX-drag.lastX;drag.lastX=e.clientX;
+  const [a,b]=span(),d=dur();let nv=drag.val+dx/r.width*d*k;
+  nv=drag.which==='A'?Math.max(0,Math.min(nv,b-0.05)):Math.min(d,Math.max(nv,a+0.05));
+  drag.val=nv;if(drag.which==='A'){A=nv;if(B==null)B=b}else{B=nv;if(A==null)A=a}
+  previewAt(nv);note.textContent=(drag.which==='A'?'A点 ':'B点 ')+fmt(nv)+(k<1?'（細かく調整中）':'　※指を下にずらすと細かく動きます');ui();
+};
+tl.onpointerup=tl.onpointercancel=()=>{if(!drag)return;$('m'+drag.which).classList.remove('drag');drag=null;ui()};
 
 $('go').onclick=()=>looping?stopLoop():startLoop();
 
