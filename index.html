@@ -90,6 +90,12 @@ label.bgm.has{background:#f5b83d;color:#1a1300}
 .dl{text-decoration:none;opacity:.35;pointer-events:none}
 .dl.ready{opacity:1;pointer-events:auto;background:var(--a);color:#001418;border-color:var(--a)}
 input[type=file]{display:none}
+select.nat{display:none}
+.selb{position:relative}
+.selb::after{content:"";position:absolute;right:8px;top:50%;width:6px;height:6px;border-right:2px solid var(--mute);border-bottom:2px solid var(--mute);transform:translateY(-70%) rotate(45deg)}
+.sheet.pick{z-index:7}
+.picklist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.picklist button.sel{background:linear-gradient(90deg,var(--a),var(--b));color:#fff;border:0;text-shadow:0 1px 2px #0005}
 .sheet{position:absolute;inset:0;z-index:5;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:8px;overflow:auto}
 .sheet[hidden]{display:none}
 .shd{display:flex;justify-content:space-between;align-items:baseline;color:#f5b83d}.shd span{font:600 14px "Overpass Mono",monospace;color:var(--ink)}
@@ -149,6 +155,10 @@ input[type=file]{display:none}
   <label class="empty" id="empty" for="file"><div><b>動画を選ぶ</b>端末に保存されている動画をタップして開く</div></label>
 </div>
 <div class="side">
+  <div class="sheet pick" id="pick" hidden>
+    <div class="shd"><b id="pickT">選択</b><button id="pickX" class="okb mini">閉じる</button></div>
+    <div class="picklist" id="pickL"></div>
+  </div>
   <div class="sheet" id="esheet" hidden>
     <div class="shd"><b>レンダリング</b><button id="eclose" class="okb mini">閉じる</button></div>
     <label class="erow"><span>回数</span><select id="rep" aria-label="往復回数">
@@ -568,6 +578,22 @@ window.addEventListener('pagehide',saveLast);
  if(last&&last.vName){const b=$('resume');b.hidden=false;b.textContent='前回の続きから（'+last.vName+'）';
   b.onclick=()=>{applySettings(last);curPid=last.id||null;pend={p:last,step:'v'};note.textContent='前回の動画「'+last.vName+'」を選んでください。';$('file').click()}}}
 document.addEventListener('visibilitychange',()=>{last=performance.now()});
+// Androidの標準の選択画面を使わず、アプリ内の選択パネルで選ぶ
+const SELS={spd:'速度',rep:'回数',q:'画質'};
+function selText(id){const e=$(id);const o=e.options[e.selectedIndex];return o?o.text:''}
+function refreshSels(){for(const id in SELS){const b=$(id+'_b');if(b){const t=selText(id);if(b.textContent!==t)b.textContent=t}}}
+for(const id in SELS){
+  const e=$(id);e.classList.add('nat');
+  const b=document.createElement('button');b.type='button';b.id=id+'_b';b.className='selb';b.textContent=selText(id);
+  e.after(b);
+  b.onclick=ev=>{ev.preventDefault();
+    $('pickT').textContent=SELS[id];
+    $('pickL').innerHTML=[...e.options].map((o,i)=>'<button type="button" data-i="'+i+'"'+(i===e.selectedIndex?' class="sel"':'')+'>'+o.text+'</button>').join('');
+    $('pickL').onclick=x=>{const t=x.target.closest('[data-i]');if(!t)return;e.selectedIndex=+t.dataset.i;e.dispatchEvent(new Event('change'));refreshSels();$('pick').hidden=true};
+    $('pick').hidden=false};
+}
+$('pickX').onclick=()=>{$('pick').hidden=true};
+setInterval(refreshSels,500);
 // プレビューをタップで全画面（縦横比は保ったまま画面に合わせる）
 // 戻るジェスチャーでアプリが閉じない・前のページに戻らないようにする
 // （戻る操作が来たら、開いているメニューや全画面を閉じるだけにして、ページには留まる）
@@ -576,7 +602,7 @@ document.addEventListener('visibilitychange',()=>{last=performance.now()});
  document.addEventListener('pointerdown',arm,{capture:true});
  window.addEventListener('popstate',()=>{
    armed=false;arm();
-   const open=['esheet','psheet','sheet'].find(id=>!$(id).hidden);
+   const open=['pick','esheet','psheet','sheet'].find(id=>!$(id).hidden);
    if(document.fullscreenElement){document.exitFullscreen().catch(()=>{})}
    else if(open){$(open).hidden=true}
    else note.textContent='戻る操作は無効にしています（アプリを閉じるときはホームボタンで）。';
