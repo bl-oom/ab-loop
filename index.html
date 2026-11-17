@@ -350,10 +350,10 @@ let drag=null,seekBusy=false,seekWant=null;
 function previewAt(x){seekWant=x;if(seekBusy)return;seekBusy=true;v.currentTime=x}
 v.addEventListener('seeked',()=>{seekBusy=false;if(seekWant!=null&&Math.abs(v.currentTime-seekWant)>0.001){const x=seekWant;seekWant=null;previewAt(x)}else seekWant=null});
 tl.onpointerdown=e=>{
-  if(!dur()||recOn)return;stopLoop();v.pause();
+  if(!dur()||recOn)return;const wasLoop=looping;stopLoop();v.pause();
   const r=tl.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*dur(),[a,b]=span();
   const which=Math.abs(x-a)<=Math.abs(x-b)?'A':'B';
-  drag={which,lastX:e.clientX,val:which==='A'?a:b};
+  drag={which,lastX:e.clientX,val:which==='A'?a:b,wasLoop};
   tl.setPointerCapture(e.pointerId);$('m'+which).classList.add('drag');previewAt(drag.val);ui();
 };
 tl.onpointermove=e=>{
@@ -365,7 +365,7 @@ tl.onpointermove=e=>{
   drag.val=nv;if(drag.which==='A'){A=nv;if(B==null)B=b}else{B=nv;if(A==null)A=a}
   previewAt(nv);note.textContent=(drag.which==='A'?'A点 ':'B点 ')+tc(nv)+(k<1?'（細かく調整中）':'　※指を下にずらすと細かく動きます');ui();
 };
-tl.onpointerup=tl.onpointercancel=()=>{if(!drag)return;$('m'+drag.which).classList.remove('drag');drag=null;ui()};
+tl.onpointerup=tl.onpointercancel=()=>{if(!drag)return;const again=drag.wasLoop;$('m'+drag.which).classList.remove('drag');drag=null;ui();if(again)startLoop()};
 
 $('go').onclick=()=>looping?stopLoop():startLoop();
 
