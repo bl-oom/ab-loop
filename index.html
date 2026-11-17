@@ -140,11 +140,11 @@ input[type=file]{display:none}
   <div class="sheet" id="esheet" hidden>
     <div class="shd"><b>書き出し</b><button id="eclose" class="okb mini">閉じる</button></div>
     <label class="erow"><span>回数</span><select id="rep" aria-label="往復回数">
-    <option value="audio">音声合わせ</option><option value="1">往復1回</option><option value="2">往復2回</option><option value="3" selected>往復3回</option>
-    <option value="5">往復5回</option><option value="10">往復10回</option><option value="20">往復20回</option>
+    <option value="audio">音声合わせ</option><option value="1">1回</option><option value="2">2回</option><option value="3" selected>3回</option>
+    <option value="5">5回</option><option value="10">10回</option><option value="20">20回</option>
   </select></label>
     <label class="erow"><span>画質</span><select id="q" aria-label="画質">
-    <option value="540">画質 軽</option><option value="720" selected>画質 標準</option><option value="1080">画質 高</option>
+    <option value="540">軽め（540p）</option><option value="720" selected>標準（720p）</option><option value="1080">高め（1080p）</option>
   </select></label>
     <p class="pinfo">速度・音（元の音／裏の音と音量）・往復／一方向は、今の設定のまま書き出します。</p>
     <button id="estart" class="okb" style="height:52px">書き出し開始</button>
